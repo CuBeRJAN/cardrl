@@ -92,6 +92,7 @@ public:
 // 92d3b3p means 11 damage, 3 block and 3 poison
 char eval_effect(char effect[EFFECT_LENGTH], player* plr, enemy* enemy) {
     int tmpnum = 0;
+    int mx;
     for (int i = 0; i < EFFECT_LENGTH-1; i++) {
         if (effect[i] == '\0') break;
         if (isdigit(effect[i])) tmpnum += (effect[i] - '0');
@@ -99,8 +100,10 @@ char eval_effect(char effect[EFFECT_LENGTH], player* plr, enemy* enemy) {
             if (effect[i] == 'd') { enemy->damage(tmpnum); tmpnum = 0; }
             else if (effect[i] == 'b') { plr->addblock(tmpnum); tmpnum = 0; }
         }
+        mx = i;
     }
-    return effect[EFFECT_LENGTH];
+
+    return effect[mx];
 }
 
 // convert effect number to int (991 to 19 etc.)
@@ -217,11 +220,15 @@ int main() {
     start_fight(&pl, &pl_pile);
     bool fight = true;
     char choice;
-    pl.damage(3);
     while (fight) {
         start_turn(&pl, &pl_pile);
         print_game(&pl, &pl_pile, &en_main);
-        cin >> choice;
-        play_card_from_hand(&pl, &pl_pile, &en_main, (int)(choice - '0')-1);
+        while (choice != 'q') {
+            cin >> choice;
+            if (choice > '0' && choice < ('1' + pl_pile.hand.size()))
+                play_card_from_hand(&pl, &pl_pile, &en_main, (int)(choice - '0')-1);
+            print_game(&pl, &pl_pile, &en_main);
+        }
+        choice = '0';
     }
 }
