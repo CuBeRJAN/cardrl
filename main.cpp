@@ -57,7 +57,7 @@ class enemy {
 public:
     string name;
     int poison = 0;
-    int maxmana = 4; // Enemies have mana, may be useful some day
+    int maxmana = 4; // Enemies have mana, may be useful some time
     int mana;
     int hp = 25;
     int block = 0;
@@ -75,7 +75,7 @@ public:
     }
 };
 
-
+// Player card piles
 class pile {
 public:
     vector<card> hand;
@@ -103,6 +103,7 @@ char eval_effect(char effect[EFFECT_LENGTH], player* plr, enemy* enemy) {
     return effect[EFFECT_LENGTH];
 }
 
+// convert effect number to int (991 to 19 etc.)
 int efnum_to_int(string efnum) {
     int ret = 0;
     for (long unsigned int i = 0; i < efnum.size(); i++) {
@@ -111,6 +112,7 @@ int efnum_to_int(string efnum) {
     return ret;
 }
 
+// convert int to effect number (19 to 991 etc.)
 string int_to_efnum(int real) {
     string ri = std::to_string(real);
     string concat = "";
@@ -121,10 +123,12 @@ string int_to_efnum(int real) {
     return concat;
 }
 
+// doesn't work?
 void shuffle_deck(vector<card>* dc) {
     std::random_shuffle(dc->begin(), dc->end());
 }
 
+// initialize some stuff at the beginning of a fight
 void start_fight(player* pl, pile* pl_cards) {
     pl_cards->hand.clear();
     pl_cards->discard.clear();
@@ -132,6 +136,8 @@ void start_fight(player* pl, pile* pl_cards) {
     shuffle_deck(&pl_cards->deck);
 }
 
+// draw a full hand of cards
+// TODO: breaks if not enough cards in draw+discard pile
 void draw_hand(player* pl, pile* pl_cards) {
     for (int i = 0; i < pl->drawcards; i++) {
         if (pl_cards->draw.size() > 0) {
@@ -148,6 +154,7 @@ void draw_hand(player* pl, pile* pl_cards) {
     }
 }
 
+// discard entire hand
 void discard_hand(player* pl, pile* pl_cards) {
     while (pl_cards->hand.size() > 0) {
         pl_cards->discard.push_back(pl_cards->hand.at(0));
@@ -167,7 +174,7 @@ void print_game(player* pl, pile* pl_cards, enemy* en) {
 void start_turn(player* pl, pile* pl_cards) {
     discard_hand(pl, pl_cards);
     draw_hand(pl, pl_cards);
-    pl->block = 0;
+    pl->block = 0; // clear block at the start of turn
     pl->mana = pl->maxmana;
 }
 
@@ -203,9 +210,11 @@ int main() {
     pl_pile.deck.push_back(cards.at(2));
     pl_pile.deck.push_back(cards.at(2));
 
+    // Initialize enemy
+    enemy en_main;
+
 
     start_fight(&pl, &pl_pile);
-    enemy en_main;
     bool fight = true;
     char choice;
     pl.damage(3);
