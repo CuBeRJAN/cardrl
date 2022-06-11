@@ -16,8 +16,9 @@
 using std::cout;    using std::cin;
 using std::string;  using std::vector;
 
+
 void cls() {
-    system("clear");
+    //system("clear");
 }
 
 class card {
@@ -44,6 +45,7 @@ public:
     int maxmana = 3;
     int mana;
     int hp = 25;
+    int maxhp = 25;
     int block = 0;
     vector<card> deck;
 
@@ -92,14 +94,34 @@ public:
     vector<card> draw;
 };
 
+void discard_from_hand(pile* pl_cards, int index);
+void exhaust_from_hand(pile* pl_cards, int index);
+
+void buffer_send(string tosend) {
+    cout << tosend;
+}
+
+char get_onechar() {
+    char ret;
+    cin >> ret;
+    return ret;
+}
+
+int select_from_hand(pile* plc, string msg) {
+    buffer_send(msg);
+    char inp = get_onechar();
+    return (inp - '0' - 1);
+}
+
 // Evaluate effect of card
 // d = dmg
 // p = pois
 // b = block
 // last letter is return value ([D]iscard, [E]xhaust, [R]eturn)
 // 92d3b3p means 11 damage, 3 block and 3 poison
-// [b]lock, [d]amage, dis[c]ard, [p]oison
-char eval_effect(char effect[EFFECT_LENGTH], player* plr, enemy* enemy) {
+// [b]lock, [d]amage, dis[c]ard other card(s), [p]oison
+// [h]eal, e[x]haust other card(s)
+char eval_effect(char effect[EFFECT_LENGTH], player* plr, enemy* enemy, pile* pl_pile) {
     int tmpnum = 0;
     int mx;
     for (int i = 0; i < EFFECT_LENGTH-1; i++) {
@@ -108,6 +130,16 @@ char eval_effect(char effect[EFFECT_LENGTH], player* plr, enemy* enemy) {
         else {
             if (effect[i] == 'd') { enemy->damage(tmpnum); tmpnum = 0; }
             else if (effect[i] == 'b') { plr->addblock(tmpnum); tmpnum = 0; }
+            else if (effect[i] == 'c') {
+                for (int i = 0; i < tmpnum; i++) {
+                    if (pl_pile->hand.size() > 1) {
+                        int choice = select_from_hand(pl_pile, "Select a card to discard: ");
+                        discard_from_hand(pl_pile, choice);
+                    }
+                    else break;
+                }
+                tmpnum = 0;
+            }
         }
         mx = i;
     }
@@ -191,9 +223,9 @@ void start_turn(player* pl, pile* pl_cards) {
     pl->mana = pl->maxmana;
 }
 
-char eval_card(player* pl, enemy* en, card crd) {
+char eval_card(player* pl, pile* pl_pile, enemy* en, card crd) {
     pl->mana-=crd.cost;
-    return eval_effect(crd.effect, pl, en);
+    return eval_effect(crd.effect, pl, en, pl_pile);
 }
 
 void discard_from_hand(pile* pl_cards, int index) {
@@ -201,9 +233,15 @@ void discard_from_hand(pile* pl_cards, int index) {
     pl_cards->hand.erase(pl_cards->hand.begin() + index);
 }
 
+
+void exhaust_from_hand(pile* pl_cards, int index) {
+    pl_cards->discard.push_back(pl_cards->hand.at(index));
+    pl_cards->hand.erase(pl_cards->hand.begin() + index);
+}
+
 void play_card_from_hand(player* pl, pile* pl_cards, enemy* en, int index) {
     if (pl->mana >= pl_cards->hand.at(index).cost)
-        if (eval_card(pl, en, pl_cards->hand.at(index)) == 'D')
+        if (eval_card(pl, pl_cards, en, pl_cards->hand.at(index)) == 'D')
             discard_from_hand(pl_cards, index);
 }
 
@@ -214,10 +252,10 @@ int main() {
     //       possibly use a vector which will point to each card's variants?
     cards.push_back(card("Strike", "Deal 6 damage","6dD",1)); // last value is mana cost
     cards.push_back(card("Defend", "Get 5 block","5bD",1));
-    cards.push_back(card("Iron mask", "Get 10 block and discard another card", "10bcD",1));
+    cards.push_back(card("Iron mask", "Get 10 block and discard another card", "10b1cD",1));
     cards.push_back(card("Strike+", "Deal 9 damage","9dD",1));
     cards.push_back(card("Defend+", "Get 8 block","8bD",1));
-    cards.push_back(card("Iron mask+", "Get 13 block and discard another card", "13bcD",1));
+    cards.push_back(card("Iron mask+", "Get 13 block and discard another card", "13b1cD",1));
 
 
     // Initialize player and deck
