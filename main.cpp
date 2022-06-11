@@ -97,6 +97,7 @@ public:
 // b = block
 // last letter is return value ([D]iscard, [E]xhaust, [R]eturn)
 // 92d3b3p means 11 damage, 3 block and 3 poison
+// [b]lock, [d]amage, dis[c]ard, [p]oison
 char eval_effect(char effect[EFFECT_LENGTH], player* plr, enemy* enemy) {
     int tmpnum = 0;
     int mx;
@@ -210,7 +211,7 @@ int main() {
     vector<card> cards;
     cards.push_back(card("Strike", "Deal 6 damage","6dD",1)); // last value is mana cost
     cards.push_back(card("Defend", "Get 6 block","6bD",1));
-    cards.push_back(card("Iron mask", "Get 10 block and discard another card", "10bD",1));
+    cards.push_back(card("Iron mask", "Get 10 block and discard another card", "10bcD",1));
 
     // Initialize player and deck
     player pl;
