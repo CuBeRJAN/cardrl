@@ -10,9 +10,14 @@
 
 #define EFFECT_LENGTH 100
 
+// This game is a Slay the Spire ripoff
+
 using std::cout;    using std::cin;
 using std::string;  using std::vector;
 
+void cls() {
+    system("clear");
+}
 
 class card {
 public:
@@ -35,7 +40,7 @@ public:
     int drawcards = 4;
     int drawlimit = 10;
     int poison = 0;
-    int maxmana = 4;
+    int maxmana = 3;
     int mana;
     int hp = 25;
     int block = 0;
@@ -168,6 +173,7 @@ void discard_hand(player* pl, pile* pl_cards) {
 }
 
 void print_game(player* pl, pile* pl_cards, enemy* en) {
+    cls();
     cout << "HP: " << pl->hp << "\t\tEnemy HP: " << en->hp << "\n";
     cout << "Block: " << pl->block << "\n";
     cout << "Mana: " << pl->mana << "\n";
@@ -229,7 +235,7 @@ int main() {
         print_game(&pl, &pl_pile, &en_main);
         while (choice != 'q') {
             cin >> choice;
-            if (choice > '0' && choice < ('1' + pl_pile.hand.size()))
+            if (choice > '0' && choice < (char)('1' + pl_pile.hand.size()))
                 play_card_from_hand(&pl, &pl_pile, &en_main, (int)(choice - '0')-1);
             print_game(&pl, &pl_pile, &en_main);
         }
