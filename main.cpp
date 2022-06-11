@@ -16,12 +16,14 @@ using std::string;  using std::vector;
 
 class card {
 public:
-    card (string n, string d, string ef) {
+    card (string n, string d, string ef, int c) {
         name = n;
         desc = d;
+        cost = c;
         strcpy(effect, ef.c_str());
     }
 
+    int cost;
     string name;
     string desc;
     char effect[EFFECT_LENGTH];
@@ -182,6 +184,7 @@ void start_turn(player* pl, pile* pl_cards) {
 }
 
 char eval_card(player* pl, enemy* en, card crd) {
+    pl->mana-=crd.cost;
     return eval_effect(crd.effect, pl, en);
 }
 
@@ -191,16 +194,17 @@ void discard_from_hand(pile* pl_cards, int index) {
 }
 
 void play_card_from_hand(player* pl, pile* pl_cards, enemy* en, int index) {
-    if (eval_card(pl, en, pl_cards->hand.at(index)) == 'D')
-        discard_from_hand(pl_cards, index);
+    if (pl->mana >= pl_cards->hand.at(index).cost)
+        if (eval_card(pl, en, pl_cards->hand.at(index)) == 'D')
+            discard_from_hand(pl_cards, index);
 }
 
 int main() {
     /* Define cards TODO: read from a database file */
     vector<card> cards;
-    cards.push_back(card("Strike", "Deal 6 damage","6dD"));
-    cards.push_back(card("Defend", "Get 6 block","6bD"));
-    cards.push_back(card("Iron mask", "Get 10 block and discard another card", "10bD"));
+    cards.push_back(card("Strike", "Deal 6 damage","6dD",1)); // last value is mana cost
+    cards.push_back(card("Defend", "Get 6 block","6bD",1));
+    cards.push_back(card("Iron mask", "Get 10 block and discard another card", "10bD",1));
 
     // Initialize player and deck
     player pl;
