@@ -7,6 +7,7 @@
 #include<cstdlib>
 #include<string.h>
 #include<vector>
+#include "cpptree.h"
 
 #define EFFECT_LENGTH 100
 
