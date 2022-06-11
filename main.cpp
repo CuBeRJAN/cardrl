@@ -209,9 +209,15 @@ void play_card_from_hand(player* pl, pile* pl_cards, enemy* en, int index) {
 int main() {
     /* Define cards TODO: read from a database file */
     vector<card> cards;
+    // TODO: define card pairings for upgraded variants
+    //       possibly use a vector which will point to each card's variants?
     cards.push_back(card("Strike", "Deal 6 damage","6dD",1)); // last value is mana cost
-    cards.push_back(card("Defend", "Get 6 block","6bD",1));
+    cards.push_back(card("Defend", "Get 5 block","5bD",1));
     cards.push_back(card("Iron mask", "Get 10 block and discard another card", "10bcD",1));
+    cards.push_back(card("Strike+", "Deal 9 damage","9dD",1));
+    cards.push_back(card("Defend+", "Get 8 block","8bD",1));
+    cards.push_back(card("Iron mask+", "Get 13 block and discard another card", "13bcD",1));
+
 
     // Initialize player and deck
     player pl;
