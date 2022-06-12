@@ -102,7 +102,7 @@ public:
     int act = 0; // game is split into 3 acts, this stores the act number
     int poison = 0;
     int frail = 0; // weaken block cards
-    int maxmana = 3;
+    int maxmana = 2;
     int mana;
     int weak = 0; // -1 weak each turn
     int hp = 50;
@@ -129,6 +129,10 @@ public:
         }
         else
             block -= rdmg;
+    }
+
+    int to_self_dmg(int dmg, int strength) {
+        return (dmg + (dmg * (0.2 * strength)));
     }
 
     void addblock(int blc) {
@@ -193,6 +197,10 @@ public:
         hp = maxhp;
     }
 
+
+    int to_self_dmg(int dmg, int strength) {
+        return (dmg + (dmg * (0.2 * strength)));
+    }
 
     void clear_block() {
         if (!barricade) block = 0;
@@ -305,10 +313,10 @@ void eval_effect(char effect[EFFECT_LENGTH], player* plr, enemy* en, pile* pl_pi
 
         if (isdigit(effect[i])) tmpnum += (effect[i] - '0');
         else {
-            if (effect[i] == 'd') { en->damage(tmpnum, en->strength);
-                buffer_queue(colors.red+"You hit for "+std::to_string(tmpnum)+" damage"+colors.end); tmpnum = 0; }
+            if (effect[i] == 'd') { en->damage(tmpnum, plr->strength);
+                buffer_queue(colors.red+"You hit for "+std::to_string(plr->to_self_dmg(tmpnum, plr->strength))+" damage"+colors.end); tmpnum = 0; }
             else if (effect[i] == 'D') { plr->damage(tmpnum, en->strength);
-                buffer_queue(colors.red+"You take "+std::to_string(tmpnum)+" damage"+colors.end); tmpnum = 0; }
+                buffer_queue(colors.red+"You take "+std::to_string(plr->to_self_dmg(tmpnum, plr->strength))+" damage"+colors.end); tmpnum = 0; }
             else if (effect[i] == 'b') { plr->addblock(tmpnum );
                 buffer_queue(colors.cyan+"You gain "+std::to_string(tmpnum)+" block"+colors.end); tmpnum = 0; }
             else if (effect[i] == 'B') { en->addblock(tmpnum );
@@ -318,9 +326,9 @@ void eval_effect(char effect[EFFECT_LENGTH], player* plr, enemy* en, pile* pl_pi
             else if (effect[i] == 'S') { en->strength += tmpnum;
                 buffer_queue(colors.magenta+"Enemy gains "+std::to_string(tmpnum)+" strength"+colors.end); tmpnum = 0; }
             else if (effect[i] == 'w') { plr->weak += tmpnum+1; // +1 because weaken gets removed at the start of player turn
-                buffer_queue(colors.magenta+"Enemy weakens you for "+std::to_string(tmpnum)+" turn(s)"+colors.end); tmpnum = 0; }
+                buffer_queue(colors.magenta+"Enemy weakens you for "+std::to_string(tmpnum)+" more turn(s)"+colors.end); tmpnum = 0; }
             else if (effect[i] == 'W') { en->weak += tmpnum+1; // +1 because weaken gets removed at start of enemy turn
-                buffer_queue(colors.magenta+"You weaken enemy for "+std::to_string(tmpnum+1)+" turn(s)"+colors.end); tmpnum = 0; }
+                buffer_queue(colors.magenta+"You weaken enemy for "+std::to_string(tmpnum+1)+" more turn(s)"+colors.end); tmpnum = 0; }
             else if (effect[i] == 'c') {
                 for (int i = 0; i < tmpnum; i++) {
                     if (pl_pile->hand.size() > 0) {
@@ -542,7 +550,7 @@ void init_game(vector<enemy>* env, vector<card>* crds) {
     // Add after all non-upgraded cards!
     // name - desc - effect - mana - rarity - color - type (0 attack, 1 skill)
     // + after card name means upgraded ! each upgraded card has to follow this naming !
-    crds->push_back(card("Strike", "Deal 6 damage","6dD",1,0, colors.red,0));
+    crds->push_back(card("Strike", "Deal 5 damage","5dD",1,0, colors.red,0));
     crds->push_back(card("Defend", "Get 5 block","5bD",1,0, colors.cyan,1));
     crds->push_back(card("Iron mask", "Get 10 block and discard another card", "91b1cD",1,0, colors.cyan,1));
     crds->push_back(card("Fear strike", "Deal 3 damage and apply 1 weak","3d1WD",0,0, colors.magenta,0));
