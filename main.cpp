@@ -820,6 +820,8 @@ bool one_chance_in(int max) {
 card select_random_card() {
     card cr = *select_randomly(cards.begin(), cards.end());
     while (true) {
+        if (cr.rarity == 0)
+            cr = *select_randomly(cards.begin(), cards.end());
         if (cr.rarity == 2) {
             if (!one_chance_in(3))
                 cr = *select_randomly(cards.begin(), cards.end());
