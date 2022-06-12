@@ -554,7 +554,7 @@ void init_game(vector<enemy>* env, vector<card>* crds) {
     env->push_back(enemy("Cultist",30,1,{"8Da","7Ba","2Sa"}));
     env->push_back(enemy("Cultist",30,2,{"12Da","10Ba","2Sa"}));
     env->push_back(enemy("Hobgoblin",30,1,{"8Da","7Ba","2wa"}));
-    env->push_back(enemy("Strong goblin",35,101,{"93Da","91Ba","93Da","91Ba","93Da","91Ba","6Sa"}));
+    env->push_back(enemy("Strong goblin",70,101,{"93Da","91Ba","93Da","93Da","91Ba","6Sa"}));
 
     // Add after all non-upgraded cards!
     // name - desc - effect - mana - rarity - color - type (0 attack, 1 skill)
