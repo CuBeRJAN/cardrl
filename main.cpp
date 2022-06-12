@@ -11,9 +11,6 @@
 #define EFFECT_LENGTH 100
 
 
-
-
-
 // This game is a Slay the Spire ripoff
 
 using std::cout;    using std::cin;
@@ -462,7 +459,7 @@ void buffer_send(string tosend) {
 
 string msgbuffer; // global variable!!
 void buffer_queue(string q) {
-    msgbuffer = q;
+    msgbuffer += q + "\n";
 }
 
 char get_onechar() {
@@ -480,7 +477,24 @@ int select_from_hand(pile* plc, string msg) {
 void buffer_flush() {
     msgbuffer = "";
 }
-void buffer_queue();
+
+void check_bufferlen() {
+    int lines = 0;
+    for (int i = 0; i < msgbuffer.length(); i++) {
+        if (msgbuffer.at(i) == '\n') lines++;
+    }
+    int it = msgbuffer.length() - 2;
+    bool lessline = false;
+    while (lines > 4) {
+        if (msgbuffer.at(it) == '\n') lessline = true;
+        msgbuffer.erase(msgbuffer.begin()+it, msgbuffer.end());
+        if (lessline) lines--;
+        lessline = false;
+        it--;
+    }
+    msgbuffer+='\n';
+}
+
 // Evaluate effect of card
 // d = dmg
 // p = pois
@@ -495,7 +509,7 @@ void buffer_queue();
 // w means do only if enemy is [w]eak etc.
 // [a]lways
 void eval_effect(char effect[EFFECT_LENGTH], player* plr, enemy* en, pile* pl_pile) {
-    buffer_flush();
+    check_bufferlen();
     int tmpnum = 0;
     for (int i = 0; i < EFFECT_LENGTH-1; i++) {
         if (effect[i] == '\0') break;
@@ -523,6 +537,7 @@ void eval_effect(char effect[EFFECT_LENGTH], player* plr, enemy* en, pile* pl_pi
                 buffer_queue(colors.magenta+"Enemy weakens you for "+std::to_string(tmpnum)+" more turn(s)"+colors.end); tmpnum = 0; }
             else if (effect[i] == 'W') { en->weak += tmpnum+1; // +1 because weaken gets removed at start of enemy turn
                 buffer_queue(colors.magenta+"You weaken enemy for "+std::to_string(tmpnum+1)+" more turn(s)"+colors.end); tmpnum = 0; }
+            else if (effect[i] == 'm') { plr->mana+=1; tmpnum = 0; }
             else if (effect[i] == 'c') {
                 for (int i = 0; i < tmpnum; i++) {
                     if (pl_pile->hand.size() > 0) {
@@ -749,6 +764,7 @@ void init_game(vector<enemy>* env, vector<card>* crds) {
     crds->push_back(card("Defend", "Get 5 block","5baD",1,0, colors.cyan,1));
     crds->push_back(card("Iron mask", "Get 10 block and discard another card", "91ba1caD",2,0, colors.cyan,1));
     crds->push_back(card("Fear strike", "Deal 3 damage and apply 1 weak","3da1WaD",1,0, colors.magenta,0));
+    crds->push_back(card("Instinct", "Deal 4 damage, if enemy is weak don't lose mana", "4d1mwD",1,1, colors.red,0));
     crds->push_back(card("Strike+", "Deal 9 damage","9daD",1,4,colors.red,0));
     crds->push_back(card("Defend+", "Get 8 block","8baD",1,4,colors.cyan,1));
     crds->push_back(card("Iron mask+", "Get 13 block and discard another card", "94ba1caD",1,4,colors.cyan,1));
