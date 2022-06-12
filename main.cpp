@@ -172,6 +172,7 @@ public:
     int hp;
     int maxhp;
     int barricade = 0;
+    int weak = 0;
     int block = 0;
     int strength = 0;
     int level;
@@ -188,6 +189,11 @@ public:
         actions = ac;
         intention_counter_max = ac.size();
         hp = maxhp;
+    }
+
+
+    void clear_block() {
+        if (!barricade) block = 0;
     }
 
     void damage(int dmg, int strength) {
@@ -237,10 +243,18 @@ public:
         eval_effect(ef,pl,this,plc);
     }
 
-    void start_turn() {
+    void begin_turn() {
         if (barricade) barricade--;
         else block = 0;
     }
+
+    void decrease_counters() {
+        clear_block();
+        if (poison) poison--;
+        if (barricade) barricade--;
+        if (weak) weak--;
+    }
+
 };
 
 
@@ -280,6 +294,7 @@ void buffer_queue();
 // [b]lock, [d]amage enemy, dis[c]ard other cards, [p]oison
 // [h]eal, e[x]haust other card(s), [H]eal enemy, [D]amage player
 // [B]lock enemy, add [s]trength, add [S]trength to enemy
+// [w]eaken player, [W]eaken enemy
 void eval_effect(char effect[EFFECT_LENGTH], player* plr, enemy* en, pile* pl_pile) {
     buffer_flush();
     int tmpnum = 0;
@@ -300,6 +315,10 @@ void eval_effect(char effect[EFFECT_LENGTH], player* plr, enemy* en, pile* pl_pi
                 buffer_queue(colors.magenta+"You gain "+std::to_string(tmpnum)+" strength"+colors.end); tmpnum = 0; }
             else if (effect[i] == 'S') { en->strength += tmpnum;
                 buffer_queue(colors.magenta+"Enemy gains "+std::to_string(tmpnum)+" strength"+colors.end); tmpnum = 0; }
+            else if (effect[i] == 'w') { plr->weak += tmpnum;
+                buffer_queue(colors.magenta+"Enemy weakens you for "+std::to_string(tmpnum)+" turns"+colors.end); tmpnum = 0; }
+            else if (effect[i] == 'W') { en->weak += tmpnum+1; // +1 because weaken gets removed at start of enemy turn
+                buffer_queue(colors.magenta+"You weaken enemy for "+std::to_string(tmpnum)+" turns"+colors.end); tmpnum = 0; }
             else if (effect[i] == 'c') {
                 for (int i = 0; i < tmpnum; i++) {
                     if (pl_pile->hand.size() > 0) {
@@ -382,6 +401,7 @@ string enemy_intention_to_string(string intend) {
             if (intend[i] == 'D') { ret += ("Attack for " + std::to_string(tmpnum) + " damage. || "); tmpnum = 0; }
             else if (intend[i] == 'B') { ret += ("Apply " + std::to_string(tmpnum) + " block. || "); tmpnum = 0; }
             else if (intend[i] == 'S') { ret += ("Gain " + std::to_string(tmpnum) + " strength. || "); tmpnum = 0; }
+            else if (intend[i] == 'w') { ret += ("Weaken " + std::to_string(tmpnum) + " turns. || "); tmpnum = 0; }
         }
         mx = i;
     }
@@ -419,6 +439,9 @@ void print_game(player* pl, pile* pl_cards, enemy* en) {
              << mydesc << colors.magenta
              << "\t" << ":: Mana cost: " << pl_cards->hand.at(i).cost << colors.end << std::endl;
     }
+    cout << "\n\n\n";
+    cout << "weak: " << pl->weak << "\t\tstr: " << pl->strength << "\t\tpoison: " << pl->poison << "\n";
+    cout << "enemy weak: " << en->weak << "\tenemy str: " << en->strength << "\tenemy poison: " << en->poison << "\n";
     cout << string(pl->drawlimit-cnt,'\n') << msgbuffer << "\n";
 }
 
@@ -471,6 +494,7 @@ void create_fight(player* pl, pile* plc, enemy* en_main) {
     while(fight) {
         start_turn(pl, plc);
         en_main->get_intention();
+        en_main->decrease_counters();
         print_game(pl, plc, en_main);
         while (choice != 'q') {
             cin >> choice;
@@ -483,29 +507,33 @@ void create_fight(player* pl, pile* plc, enemy* en_main) {
             }
             print_game(pl, plc, en_main);
         }
-        en_main->start_turn();
+        en_main->begin_turn();
         en_main->commit_intention(pl, plc);
         choice = '0';
     }
 
 }
 
-// TODO: define card pairings for upgraded variants
-//       possibly use a vector which will point to each card's variants?
+// TODO: read from some kind of proper database
 void init_game(vector<enemy>* env, vector<card>* crds) {
+    // +100 to level is elite
+    // Levels 0-2 are all act one, just different difficulties
     // Name, HP, level, effects
-    env->push_back(enemy("Goblin",20,0,{"6D","5B"}));
-    env->push_back(enemy("Strong goblin",35,3,{"93D","91B","93D","91B","93D","91B","1S"}));
-    /* Define cards TODO: read from a database file */
-    // TODO: define card pairings for upgraded variants
-    //       possibly use a vector which will point to each card's variants?
-    //       name - desc - mana - rarity - color - type (0 attack, 1 skill)
+    env->push_back(enemy("Goblin",20,0,{"6D","5B",})); // goblin level 0
+    env->push_back(enemy("Goblin",30,1,{"8D","7B","8D"})); // goblin level 1
+    env->push_back(enemy("Hobgoblin",30,1,{"8D","7B","2w"})); // hobgoblin level 1
+    env->push_back(enemy("Strong goblin",35,101,{"93D","91B","93D","91B","93D","91B","1S"})); // elite goblin, level 1
+
+    // Add after all non-upgraded cards!
+    // name - desc - effect - mana - rarity - color - type (0 attack, 1 skill)
     crds->push_back(card("Strike", "Deal 6 damage","6dD",1,0, colors.red,0));
     crds->push_back(card("Defend", "Get 5 block","5bD",1,0, colors.cyan,1));
     crds->push_back(card("Iron mask", "Get 10 block and discard another card", "91b1cD",1,0, colors.cyan,1));
+    crds->push_back(card("Fear strike", "Deal 3 damage and apply 1 weak","3d1WD",0,0, colors.magenta,0));
     crds->push_back(card("Strike+", "Deal 9 damage","9dD",1,4,colors.red,0));
     crds->push_back(card("Defend+", "Get 8 block","8bD",1,4,colors.cyan,1));
     crds->push_back(card("Iron mask+", "Get 13 block and discard another card", "94b1cD",1,4,colors.cyan,1));
+    crds->push_back(card("Fear strike", "Deal 5 damage and apply 1 weak","5d1WD",0,0, colors.magenta,0));
 }
 
 vector<card> cards; // another global variable...
@@ -528,20 +556,20 @@ enemy pick_enemy(player* pl) {
 // Pick random elite enemy from act
 enemy pick_elite_enemy(player* pl) {
     enemy en = *select_randomly(enemies.begin(),enemies.end());
-    while (en.level != pl->act+3) // 3-6 are elites for act 0-2
+    while (en.level != pl->act+100) // +100 is elites
         en = *select_randomly(enemies.begin(),enemies.end());
     return en;
 }
-
 
 // Create deck at the beginning of the game
 pile create_deck(vector<card> crds) {
     pile pl_pile;
     for (int i = 0; i < 3; i++)
-        pl_pile.deck.push_back(crds.at(0));
+        pl_pile.deck.push_back(crds.at(0)); // strike
     for (int i = 0; i < 3; i++)
-        pl_pile.deck.push_back(crds.at(1));
-    pl_pile.deck.push_back(crds.at(2));
+        pl_pile.deck.push_back(crds.at(1)); // defend
+    pl_pile.deck.push_back(crds.at(2)); // iron mask
+    pl_pile.deck.push_back(crds.at(3)); // fear strike
     return pl_pile;
 }
 
@@ -560,8 +588,9 @@ int main() {
     // Initialize player and deck
     player pl = create_player();
     pile pl_pile = create_deck(cards);
+    upgrade_card(&pl_pile,0);
     // Initialize enemy
-    enemy en_main = pick_elite_enemy(&pl); // Goblin enemy
+    enemy en_main = pick_enemy(&pl); // Goblin enemy
 
 
     create_fight(&pl, &pl_pile, &en_main);
