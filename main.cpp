@@ -356,16 +356,17 @@ string int_to_efnum(int real) {
     return concat;
 }
 
-// fucking trash language can't even shuffle a fucking vector without retarded code
-// it still isn't fucking random
+unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+std::default_random_engine shuffle_myseed(seed);
+
 // shuffle deck
 void shuffle_deck(vector<card>* dc) {
     //unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
-    std::shuffle(dc->begin(), dc->end(), std::default_random_engine());
+    std::shuffle(dc->begin(), dc->end(), shuffle_myseed);
 }
 
 void shuffle_stringvec(vector<string>* dc) {
-    std::shuffle(dc->begin(), dc->end(), std::default_random_engine());
+    std::shuffle(dc->begin(), dc->end(), shuffle_myseed);
 }
 
 // initialize some stuff at the beginning of a fight
@@ -373,7 +374,7 @@ void start_fight(player* pl, pile* pl_cards) {
     pl_cards->hand.clear();
     pl_cards->discard.clear();
     pl_cards->draw = pl_cards->deck;
-    shuffle_deck(&pl_cards->deck);
+    shuffle_deck(&pl_cards->draw);
 }
 
 // draw a full hand of cards
