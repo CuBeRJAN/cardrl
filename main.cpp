@@ -423,7 +423,7 @@ public:
 
     bool check_hp() {
         if (hp < 1) {
-            return false;;
+            return false;
         }
         return true;
     }
