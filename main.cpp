@@ -306,6 +306,7 @@ public:
 
     void damage(int dmg, int strength) {
         int rdmg = (dmg + (dmg * (0.2 * strength)));
+        if (weak) rdmg *= 0.6;
         int obl = block;
         if (rdmg >= block) {
             block = 0;
@@ -316,8 +317,10 @@ public:
     }
 
     int mult_dmg(int dmg, int strength) {
+        if (weak) return (dmg + (dmg * (0.2 * strength))) * 0.6;
         return (dmg + (dmg * (0.2 * strength)));
     }
+
 
     void addblock(int blc) {
         if (!frail)
@@ -383,6 +386,7 @@ public:
 
 
     int mult_dmg(int dmg, int strength) {
+        if (weak) return (dmg + (dmg * (0.2 * strength))) * 0.6;
         return (dmg + (dmg * (0.2 * strength)));
     }
 
@@ -392,6 +396,7 @@ public:
 
     void damage(int dmg, int strength) {
         int rdmg = (dmg + (dmg * (0.2 * strength)));
+        if (weak) rdmg *= 0.6;
         int obl = block;
         if (rdmg >= block) {
             block = 0;
