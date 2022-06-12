@@ -126,6 +126,8 @@ public:
     }
 };
 
+void shuffle_stringvec(vector<string>*);
+
 class enemy;
 void eval_effect(char effect[EFFECT_LENGTH], player* plr, enemy* enemy, pile* pl_pile);
 class enemy {
@@ -143,16 +145,17 @@ public:
     int frail = 0; // Lower block effectiveness
     string intention;
     vector<string> actions;
+    int intention_counter_max;
+    int intention_counter = 0;
 
     enemy(string n, int mhp, int l, vector<string> ac) {
         name = n;
         maxhp = mhp;
         level = l;
         actions = ac;
+        intention_counter_max = ac.size();
         hp = maxhp;
     }
-
-    // void do_random_action(player* pl, pile* plc);
 
     void damage(int dmg, int strength) {
         int rdmg = (dmg + (dmg * (0.2 * strength)));
@@ -184,6 +187,14 @@ public:
     }
 
     string get_intention() {
+        if (intention_counter >= intention_counter_max) {
+            shuffle_stringvec(&actions);
+            intention_counter = 0;
+        }
+        else {
+            intention = actions.at(intention_counter);
+            intention_counter++;
+        }
         intention = *select_randomly(actions.begin(),actions.end());
         return intention;
     }
@@ -291,6 +302,10 @@ string int_to_efnum(int real) {
 
 // doesn't work?
 void shuffle_deck(vector<card>* dc) {
+    std::random_shuffle(dc->begin(), dc->end());
+}
+
+void shuffle_stringvec(vector<string>* dc) {
     std::random_shuffle(dc->begin(), dc->end());
 }
 
