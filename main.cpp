@@ -358,17 +358,14 @@ string int_to_efnum(int real) {
 
 // fucking trash language can't even shuffle a fucking vector without retarded code
 // it still isn't fucking random
-unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
-
 // shuffle deck
 void shuffle_deck(vector<card>* dc) {
     //unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
-    std::shuffle(dc->begin(), dc->end(), std::default_random_engine(seed));
+    std::shuffle(dc->begin(), dc->end(), std::default_random_engine());
 }
 
 void shuffle_stringvec(vector<string>* dc) {
-    //unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
-    std::shuffle(dc->begin(), dc->end(), std::default_random_engine(seed));
+    std::shuffle(dc->begin(), dc->end(), std::default_random_engine());
 }
 
 // initialize some stuff at the beginning of a fight
@@ -392,7 +389,7 @@ void draw_hand(player* pl, pile* pl_cards) {
             shuffle_deck(&pl_cards->draw);
             pl_cards->hand.push_back(pl_cards->draw.at(0));
             pl_cards->draw.erase(pl_cards->draw.begin());
-
+            pl_cards->discard.erase(pl_cards->discard.begin(), pl_cards->discard.end());
         }
     }
 }
@@ -479,7 +476,6 @@ void discard_from_hand(pile* pl_cards, int index) {
 
 // same thing but exhaust
 void exhaust_from_hand(pile* pl_cards, int index) {
-    pl_cards->discard.push_back(pl_cards->hand.at(index));
     pl_cards->hand.erase(pl_cards->hand.begin() + index);
 }
 
