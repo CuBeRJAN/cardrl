@@ -440,8 +440,10 @@ void print_game(player* pl, pile* pl_cards, enemy* en) {
              << "\t" << ":: Mana cost: " << pl_cards->hand.at(i).cost << colors.end << std::endl;
     }
     cout << "\n\n\n";
-    cout << "weak: " << pl->weak << "\t\tstr: " << pl->strength << "\t\tpoison: " << pl->poison << "\n";
-    cout << "enemy weak: " << en->weak << "\tenemy str: " << en->strength << "\tenemy poison: " << en->poison << "\n";
+    cout << "weak: " << colors.magenta << pl->weak << colors.end << "\t\tstr: " << colors.red << pl->strength << colors.end
+         << "\t\tpoison: " << colors.green << pl->poison << colors.end << "\n";
+    cout << "enemy weak: " << colors.magenta << en->weak << colors.end << "\tenemy str: "
+         << colors.red << en->strength << colors.end << "\tenemy poison: " << colors.green << en->poison << colors.end << "\n";
     cout << string(pl->drawlimit-cnt,'\n') << msgbuffer << "\n";
 }
 
@@ -495,6 +497,7 @@ void create_fight(player* pl, pile* plc, enemy* en_main) {
         start_turn(pl, plc);
         en_main->get_intention();
         en_main->decrease_counters();
+        pl->decrease_counters();
         print_game(pl, plc, en_main);
         while (choice != 'q') {
             cin >> choice;
@@ -526,6 +529,7 @@ void init_game(vector<enemy>* env, vector<card>* crds) {
 
     // Add after all non-upgraded cards!
     // name - desc - effect - mana - rarity - color - type (0 attack, 1 skill)
+    // + after card name means upgraded ! each upgraded card has to follow this naming !
     crds->push_back(card("Strike", "Deal 6 damage","6dD",1,0, colors.red,0));
     crds->push_back(card("Defend", "Get 5 block","5bD",1,0, colors.cyan,1));
     crds->push_back(card("Iron mask", "Get 10 block and discard another card", "91b1cD",1,0, colors.cyan,1));
@@ -533,7 +537,7 @@ void init_game(vector<enemy>* env, vector<card>* crds) {
     crds->push_back(card("Strike+", "Deal 9 damage","9dD",1,4,colors.red,0));
     crds->push_back(card("Defend+", "Get 8 block","8bD",1,4,colors.cyan,1));
     crds->push_back(card("Iron mask+", "Get 13 block and discard another card", "94b1cD",1,4,colors.cyan,1));
-    crds->push_back(card("Fear strike", "Deal 5 damage and apply 1 weak","5d1WD",0,0, colors.magenta,0));
+    crds->push_back(card("Fear strike+", "Deal 5 damage and apply 1 weak","5d1WD",0,0, colors.magenta,0));
 }
 
 vector<card> cards; // another global variable...
@@ -588,7 +592,6 @@ int main() {
     // Initialize player and deck
     player pl = create_player();
     pile pl_pile = create_deck(cards);
-    upgrade_card(&pl_pile,0);
     // Initialize enemy
     enemy en_main = pick_enemy(&pl); // Goblin enemy
 
