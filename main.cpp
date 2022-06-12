@@ -780,9 +780,9 @@ void init_game(vector<enemy>* env, vector<card>* crds) {
     // name - desc - effect - mana - rarity - color - type (0 attack, 1 skill)
     // '+' after card name means upgraded ! each upgraded card has to follow this naming !
     // TODO: shuffle curse, vulnerable, can't draw more this turn
-    crds->push_back(card("Strike", "Deal 5 damage","5daD",0,0, colors.red,0));
-    crds->push_back(card("Defend", "Get 5 block","5baD",0,0, colors.cyan,1));
-    crds->push_back(card("Iron mask", "Get 10 block and discard another card", "91ba1caD",1,0, colors.cyan,1));
+    crds->push_back(card("Strike", "Deal 5 damage","5daD",1,0, colors.red,0));
+    crds->push_back(card("Defend", "Get 5 block","5baD",1,0, colors.cyan,1));
+    crds->push_back(card("Iron mask", "Get 10 block and discard another card", "91ba1caD",1,1, colors.cyan,1));
     crds->push_back(card("Fear strike", "Deal 3 damage and apply 1 weak","3da1WaD",0,0, colors.magenta,0));
     crds->push_back(card("Instinct", "Deal 4 damage, if enemy is weak don't lose mana", "4d1mwD",1,1, colors.red,0));
     crds->push_back(card("Pain", "Deal 12 damage and apply 2 weak", "93da1WaD",1,1, colors.red,0));
@@ -820,7 +820,7 @@ bool one_chance_in(int max) {
 card select_random_card() {
     card cr = *select_randomly(cards.begin(), cards.end());
     while (true) {
-        if (cr.rarity == 0)
+        if (cr.rarity == 0) // don't select started cards
             cr = *select_randomly(cards.begin(), cards.end());
         if (cr.rarity == 2) {
             if (!one_chance_in(3))
