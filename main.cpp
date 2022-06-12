@@ -338,6 +338,12 @@ public:
         if (!barricade) block = 0;
     }
 
+    int mult_block(int blc) {
+        if (frail)
+            blc *= 0.7;
+        return blc;
+    }
+
     void decrease_counters() {
         clear_block();
         if (poison) poison--;
@@ -395,6 +401,12 @@ public:
 
     void clear_block() {
         if (!barricade) block = 0;
+    }
+
+    int mult_block(int blc) {
+        if (frail)
+            blc *= 0.7;
+        return blc;
     }
 
     void take_damage(int dmg) {
@@ -643,7 +655,7 @@ string enemy_intention_to_string(enemy* en) {
         if (isdigit(intend[i])) tmpnum += (intend[i] - '0');
         else {
             if (intend[i] == 'D') { ret += ("Attack for " + std::to_string(en->mult_dmg_from(tmpnum)) + " damage. || "); tmpnum = 0; }
-            else if (intend[i] == 'B') { ret += ("Apply " + std::to_string(tmpnum) + " block. || "); tmpnum = 0; }
+            else if (intend[i] == 'B') { ret += ("Apply " + std::to_string(en->mult_block(tmpnum)) + " block. || "); tmpnum = 0; }
             else if (intend[i] == 'S') { ret += ("Gain " + std::to_string(tmpnum) + " strength. || "); tmpnum = 0; }
             else if (intend[i] == 'w') { ret += ("Weaken " + std::to_string(tmpnum) + " turns. || "); tmpnum = 0; }
         }
