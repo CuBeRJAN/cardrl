@@ -378,20 +378,20 @@ void start_fight(player* pl, pile* pl_cards) {
 }
 
 // draw a full hand of cards
-// TODO: breaks if not enough cards in draw+discard pile
 void draw_hand(player* pl, pile* pl_cards) {
     for (int i = 0; i < pl->drawcards; i++) {
         if (pl_cards->draw.size() > 0) {
             pl_cards->hand.push_back(pl_cards->draw.at(0));
             pl_cards->draw.erase(pl_cards->draw.begin());
         }
-        else {
+        else if (pl_cards->discard.size() > 0) {
             pl_cards->draw = pl_cards->discard;
             shuffle_deck(&pl_cards->draw);
             pl_cards->hand.push_back(pl_cards->draw.at(0));
             pl_cards->draw.erase(pl_cards->draw.begin());
             pl_cards->discard.erase(pl_cards->discard.begin(), pl_cards->discard.end());
         }
+        else break;
     }
 }
 
@@ -424,6 +424,8 @@ void discard_hand(player* pl, pile* pl_cards) {
     }
 }
 
+// Prints the entire game screen
+// This function is really ugly
 void print_game(player* pl, pile* pl_cards, enemy* en) {
     cls();
     cout << colors.green << "Act: " << pl->act+1 << "/3" << "\t\t\t" << "Level: " << pl->level << colors.red
