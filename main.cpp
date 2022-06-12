@@ -852,6 +852,9 @@ player create_player() {
 }
 
 
+// TODO: get card after battle
+//       get special card after elite
+// encounters, shops
 int main() {
     srand(time(NULL));
     init_game(&enemies, &cards); // global variables
