@@ -665,7 +665,7 @@ void discard_hand(player* pl, pile* pl_cards) {
 // This function is really ugly
 void print_game(player* pl, pile* pl_cards, enemy* en) {
     cls();
-    cout << colors.green << "Act: " << pl->act+1 << "/3" << "\t\t\t" << "Level: " << pl->level << colors.red
+    cout << colors.green << "Act: " << pl->act+1 << "/3" << "\t\t\t" << "Level: " << pl->level+1 << colors.red
          << "\t\t\tDeck: " << pl_cards->deck.size() << " cards";
     cout << colors.yellow << "\t\t\tGold: " << pl->gold << colors.end << "\n";
     cout << string(111, '-') << "\n";
@@ -888,5 +888,6 @@ int main() {
             if (pl.level == 2 || pl.level == 6)
                 pl.nlevel++;
         }
+        pl.act++;
     }
 }
