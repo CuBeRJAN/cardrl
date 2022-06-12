@@ -504,7 +504,7 @@ void buffer_flush() {
 
 void check_bufferlen() {
     int lines = 0;
-    for (int i = 0; i < msgbuffer.length(); i++) {
+    for (unsigned long int i = 0; i < msgbuffer.length(); i++) {
         if (msgbuffer.at(i) == '\n') lines++;
     }
     int it = msgbuffer.length() - 2;
@@ -620,6 +620,10 @@ void shuffle_stringvec(vector<string>* dc) {
 
 // initialize some stuff at the beginning of a fight
 void start_fight(player* pl, pile* pl_cards) {
+    pl->weak = 0;
+    pl->poison = 0;
+    pl->block = 0;
+    pl->barricade = 0;
     pl_cards->hand.clear();
     pl_cards->discard.clear();
     pl_cards->draw = pl_cards->deck;
@@ -649,7 +653,6 @@ string enemy_intention_to_string(enemy* en) {
     string intend = en->intention;
     int tmpnum = 0;
     string ret = "";
-    int mx;
     for (int i = 0; i < EFFECT_LENGTH-1; i++) {
         if (intend[i] == '\0') break;
         if (isdigit(intend[i])) tmpnum += (intend[i] - '0');
@@ -659,7 +662,6 @@ string enemy_intention_to_string(enemy* en) {
             else if (intend[i] == 'S') { ret += ("Gain " + std::to_string(tmpnum) + " strength. || "); tmpnum = 0; }
             else if (intend[i] == 'w') { ret += ("Weaken " + std::to_string(tmpnum) + " turns. || "); tmpnum = 0; }
         }
-        mx = i;
     }
 
     ret.erase(ret.end() - 3, ret.end());
