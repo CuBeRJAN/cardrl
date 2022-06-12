@@ -10,6 +10,7 @@
 
 #define EFFECT_LENGTH 100
 
+
 // This game is a Slay the Spire ripoff
 
 using std::cout;    using std::cin;
@@ -91,6 +92,7 @@ class player { // TODO: There surely is a cleaner way than having 20000 variable
 public:
     string name;
     int drawcards = 4;
+    int nlevel = 0; // level of enemies (not of descent!)
     int drawlimit = 10; // how many cards can be in hand at once
     int barricade = 0; // don't lose block for x turns
     int gold = 0;
@@ -315,7 +317,7 @@ void eval_effect(char effect[EFFECT_LENGTH], player* plr, enemy* en, pile* pl_pi
                 buffer_queue(colors.magenta+"You gain "+std::to_string(tmpnum)+" strength"+colors.end); tmpnum = 0; }
             else if (effect[i] == 'S') { en->strength += tmpnum;
                 buffer_queue(colors.magenta+"Enemy gains "+std::to_string(tmpnum)+" strength"+colors.end); tmpnum = 0; }
-            else if (effect[i] == 'w') { plr->weak += tmpnum;
+            else if (effect[i] == 'w') { plr->weak += tmpnum+1; // +1 because weaken gets removed at the start of player turn
                 buffer_queue(colors.magenta+"Enemy weakens you for "+std::to_string(tmpnum)+" turns"+colors.end); tmpnum = 0; }
             else if (effect[i] == 'W') { en->weak += tmpnum+1; // +1 because weaken gets removed at start of enemy turn
                 buffer_queue(colors.magenta+"You weaken enemy for "+std::to_string(tmpnum)+" turns"+colors.end); tmpnum = 0; }
@@ -354,13 +356,19 @@ string int_to_efnum(int real) {
     return concat;
 }
 
-// doesn't work?
+// fucking trash language can't even shuffle a fucking vector without retarded code
+// it still isn't fucking random
+unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+
+// shuffle deck
 void shuffle_deck(vector<card>* dc) {
-    std::random_shuffle(dc->begin(), dc->end());
+    //unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+    std::shuffle(dc->begin(), dc->end(), std::default_random_engine(seed));
 }
 
 void shuffle_stringvec(vector<string>* dc) {
-    std::random_shuffle(dc->begin(), dc->end());
+    //unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+    std::shuffle(dc->begin(), dc->end(), std::default_random_engine(seed));
 }
 
 // initialize some stuff at the beginning of a fight
@@ -381,7 +389,7 @@ void draw_hand(player* pl, pile* pl_cards) {
         }
         else {
             pl_cards->draw = pl_cards->discard;
-            shuffle_deck(&pl_cards->discard);
+            shuffle_deck(&pl_cards->draw);
             pl_cards->hand.push_back(pl_cards->draw.at(0));
             pl_cards->draw.erase(pl_cards->draw.begin());
 
@@ -425,6 +433,7 @@ void print_game(player* pl, pile* pl_cards, enemy* en) {
     cout << colors.yellow << "\t\t\tGold: " << pl->gold << colors.end << "\n";
     cout << string(111, '-') << "\n";
     cout << colors.yellow << pl->name << " the ironclad\t\t\t\t\t\t\t\t\t\t" << en->name << colors.end << std::endl;
+    cout << "draw pile: " << pl_cards->draw.size() << " cards\t\t\t\t\t\t\t\t\t\t" << "discard pile: " << pl_cards->discard.size() << " cards\n";
     cout << "HP: " << colors.green << pl->hp << colors.end << "\t\t\t\t\t\t\t\t\t\t\t\tEnemy HP: " << colors.green << en->hp << colors.end << "\n";
     cout << "Block: " << colors.cyan << pl->block << colors.end << "\t\t\t\t\t\t\t\t\t\t\tEnemy block: " << colors.cyan << en->block << colors.end << "\n";
     cout << "Mana: " << colors.magenta << pl->mana << colors.end << "\t\t\t\t\t\t\t\t\t\t\t\tEnemy intent: " << colors.magenta << enemy_intention_to_string(en->intention) << colors.end << "\n";
@@ -444,6 +453,7 @@ void print_game(player* pl, pile* pl_cards, enemy* en) {
          << "\t\tpoison: " << colors.green << pl->poison << colors.end << "\n";
     cout << "enemy weak: " << colors.magenta << en->weak << colors.end << "\tenemy str: "
          << colors.red << en->strength << colors.end << "\tenemy poison: " << colors.green << en->poison << colors.end << "\n";
+
     cout << string(pl->drawlimit-cnt,'\n') << msgbuffer << "\n";
 }
 
@@ -552,7 +562,7 @@ void upgrade_card(pile* plc, int index) {
 // Pick random enemy from act
 enemy pick_enemy(player* pl) {
     enemy en = *select_randomly(enemies.begin(),enemies.end());
-    while (en.level != pl->act)
+    while (en.level != pl->nlevel)
         en = *select_randomly(enemies.begin(),enemies.end());
     return en;
 }
@@ -560,7 +570,7 @@ enemy pick_enemy(player* pl) {
 // Pick random elite enemy from act
 enemy pick_elite_enemy(player* pl) {
     enemy en = *select_randomly(enemies.begin(),enemies.end());
-    while (en.level != pl->act+100) // +100 is elites
+    while (en.level != pl->nlevel+100) // +100 is elites
         en = *select_randomly(enemies.begin(),enemies.end());
     return en;
 }
@@ -587,14 +597,24 @@ player create_player() {
 
 
 int main() {
+    srand(0);
     init_game(&enemies, &cards); // global variables
 
     // Initialize player and deck
     player pl = create_player();
     pile pl_pile = create_deck(cards);
     // Initialize enemy
-    enemy en_main = pick_enemy(&pl); // Goblin enemy
+    enemy en_main = pick_enemy(&pl);
 
-
-    create_fight(&pl, &pl_pile, &en_main);
+    while (pl.act != 2) {
+        while (pl.level != 10) {
+            create_fight(&pl, &pl_pile, &en_main);
+            getchar();
+            getchar();
+            en_main = pick_enemy(&pl);
+            pl.level++;
+            if (pl.level == 2 || pl.level == 6)
+                pl.nlevel++;
+        }
+    }
 }
