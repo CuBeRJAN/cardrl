@@ -333,7 +333,6 @@ void eval_effect(char effect[EFFECT_LENGTH], player* plr, enemy* en, pile* pl_pi
             }
         }
     }
-
 }
 
 // convert effect number to int (991 to 19 etc.)
@@ -527,14 +526,17 @@ void create_fight(player* pl, pile* plc, enemy* en_main) {
 
 }
 
-// TODO: read from some kind of proper database
+// TODO: * read from some kind of proper database
+//       * balance the game properly
 void init_game(vector<enemy>* env, vector<card>* crds) {
     // +100 to level is elite
     // Levels 0-2 are all act one, just different difficulties
     // Name, HP, level, effects
-    env->push_back(enemy("Goblin",20,0,{"6D","5B",})); // goblin level 0
-    env->push_back(enemy("Goblin",30,1,{"8D","7B","8D"})); // goblin level 1
-    env->push_back(enemy("Hobgoblin",30,1,{"8D","7B","2w"})); // hobgoblin level 1
+    env->push_back(enemy("Goblin",20,0,{"6D","5B"}));
+    env->push_back(enemy("Goblin",30,1,{"8D","9B","9D"}));
+    env->push_back(enemy("Cultist",30,1,{"8D","7B","2S"}));
+    env->push_back(enemy("Cultist",30,2,{"12D","10B","2S"}));
+    env->push_back(enemy("Hobgoblin",30,1,{"8D","7B","2w"}));
     env->push_back(enemy("Strong goblin",35,101,{"93D","91B","93D","91B","93D","91B","1S"})); // elite goblin, level 1
 
     // Add after all non-upgraded cards!
