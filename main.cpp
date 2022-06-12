@@ -269,6 +269,7 @@ public:
 class player;
 void discard_hand(player*, pile*);
 void draw_hand(player*, pile*);
+void check_bufferlen();
 
 class player { // TODO: There surely is a cleaner way than having 20000 variables for status effects
 public:
@@ -287,8 +288,8 @@ public:
     int maxmana = 2;
     int mana;
     int weak = 0; // -1 weak each turn
-    int hp = 50;
-    int maxhp = 50;
+    int hp = 25;
+    int maxhp = 25;
     int block = 0;
     int strength = 0;
     bool confused = false; // confusion effect
@@ -459,6 +460,7 @@ void buffer_send(string tosend) {
 
 string msgbuffer; // global variable!!
 void buffer_queue(string q) {
+    check_bufferlen();
     msgbuffer += q + "\n";
 }
 
@@ -485,14 +487,17 @@ void check_bufferlen() {
     }
     int it = msgbuffer.length() - 2;
     bool lessline = false;
+    bool r = false;
     while (lines > 4) {
+        r = true;
         if (msgbuffer.at(it) == '\n') lessline = true;
         msgbuffer.erase(msgbuffer.begin()+it, msgbuffer.end());
         if (lessline) lines--;
         lessline = false;
         it--;
     }
-    msgbuffer+='\n';
+    if (r)
+        msgbuffer+='\n';
 }
 
 // Evaluate effect of card
@@ -711,7 +716,6 @@ void play_card_from_hand(player* pl, pile* pl_cards, enemy* en, int index) {
         eval_card(pl, pl_cards, en, cr);
     }
     else {
-        buffer_flush();
         buffer_queue("Not enough mana to play card.");
     }
 }
