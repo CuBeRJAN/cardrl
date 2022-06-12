@@ -398,33 +398,42 @@ void create_fight(player* pl, pile* plc, enemy* en_main) {
 
 }
 
-int main() {
-    std::vector<enemy> enemies;
+// TODO: define card pairings for upgraded variants
+//       possibly use a vector which will point to each card's variants?
+void init_game(vector<enemy>* env, vector<card>* crds) {
     // Name, HP, level, effects
-    enemies.push_back(enemy("Goblin",20,1,{"6D","5B"}));
+    env->push_back(enemy("Goblin",20,1,{"6D","5B"}));
     /* Define cards TODO: read from a database file */
-    vector<card> cards;
     // TODO: define card pairings for upgraded variants
     //       possibly use a vector which will point to each card's variants?
-    cards.push_back(card("Strike", "Deal 6 damage","6dD",1,0)); // before last value is mana cost, last is rarity
-    cards.push_back(card("Defend", "Get 5 block","5bD",1,0));
-    cards.push_back(card("Iron mask", "Get 10 block and discard another card", "91b1cD",1,0));
-    cards.push_back(card("Strike+", "Deal 9 damage","9dD",1,4));
-    cards.push_back(card("Defend+", "Get 8 block","8bD",1,4));
-    cards.push_back(card("Iron mask+", "Get 13 block and discard another card", "94b1cD",1,4));
+    crds->push_back(card("Strike", "Deal 6 damage","6dD",1,0)); // before last value is mana cost, last is rarity
+    crds->push_back(card("Defend", "Get 5 block","5bD",1,0));
+    crds->push_back(card("Iron mask", "Get 10 block and discard another card", "91b1cD",1,0));
+    crds->push_back(card("Strike+", "Deal 9 damage","9dD",1,4));
+    crds->push_back(card("Defend+", "Get 8 block","8bD",1,4));
+    crds->push_back(card("Iron mask+", "Get 13 block and discard another card", "94b1cD",1,4));
 
+}
+
+pile create_deck(vector<card> crds) {
+    pile pl_pile;
+    for (int i = 0; i < 3; i++)
+        pl_pile.deck.push_back(crds.at(0));
+    for (int i = 0; i < 3; i++)
+        pl_pile.deck.push_back(crds.at(1));
+    pl_pile.deck.push_back(crds.at(2));
+    return pl_pile;
+}
+
+int main() {
+    std::vector<enemy> enemies;
+    vector<card> cards;
+
+    init_game(&enemies, &cards);
 
     // Initialize player and deck
     player pl;
-    pile pl_pile;
-    for (int i = 0; i < 3; i++)
-        pl_pile.deck.push_back(cards.at(0));
-    for (int i = 0; i < 3; i++)
-        pl_pile.deck.push_back(cards.at(1));
-    pl_pile.deck.push_back(cards.at(2));
-    pl_pile.deck.push_back(cards.at(2));
-    pl_pile.deck.push_back(cards.at(2));
-
+    pile pl_pile = create_deck(cards);
     // Initialize enemy
     enemy en_main = enemies.at(0);
     pl.name = "Jan";
