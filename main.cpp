@@ -87,7 +87,14 @@ public:
     int strength = 0;
 
     void damage(int dmg, int strength) {
-        hp -= (dmg + (dmg * (0.2 * strength)));
+        int rdmg = (dmg + (dmg * (0.2 * strength)));
+        int obl = block;
+        if (rdmg >= block) {
+            block = 0;
+            hp -= rdmg-obl;
+        }
+        else
+            block -= rdmg;
     }
 
     void addblock(int blc) {
@@ -131,7 +138,14 @@ public:
     // void do_random_action(player* pl, pile* plc);
 
     void damage(int dmg, int strength) {
-        hp -= (dmg + (dmg * (0.2 * strength)));
+        int rdmg = (dmg + (dmg * (0.2 * strength)));
+        int obl = block;
+        if (rdmg >= block) {
+            block = 0;
+            hp -= rdmg-obl;
+        }
+        else
+            block -= rdmg;
     }
 
     void addblock(int blc) {
@@ -285,7 +299,7 @@ string enemy_intention_to_string(string intend) {
         if (isdigit(intend[i])) tmpnum += (intend[i] - '0');
         else {
             if (intend[i] == 'D') { ret += ("Attack for " + std::to_string(tmpnum) + " damage. || "); tmpnum = 0; }
-            else if (intend[i] == 'B') { ret += ("Block for " + std::to_string(tmpnum) + " damage. || "); tmpnum = 0; }
+            else if (intend[i] == 'B') { ret += ("Apply " + std::to_string(tmpnum) + " block. || "); tmpnum = 0; }
         }
         mx = i;
     }
@@ -306,7 +320,7 @@ void print_game(player* pl, pile* pl_cards, enemy* en) {
     cls();
     cout << pl->name << " the ironclad\t\t\t\t" << en->name << std::endl;
     cout << "HP: " << pl->hp << "\t\t\t\t\tEnemy HP: " << en->hp << "\n";
-    cout << "Block: " << pl->block << "\t\t\t\tEnemy block:" << en->block << "\n";
+    cout << "Block: " << pl->block << "\t\t\t\tEnemy block: " << en->block << "\n";
     cout << "Mana: " << pl->mana << "\t\t\t\t\tEnemy intent: " << enemy_intention_to_string(en->intention) << "\n";
     for (unsigned long int i = 0; i < pl_cards->hand.size(); i++) {
         cout << "(" << i+1 << ") " << pl_cards->hand.at(i).name << "\t\t:: " << pl_cards->hand.at(i).desc
