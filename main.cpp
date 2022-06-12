@@ -156,7 +156,7 @@ public:
         eval_effect(ef,pl,this,plc);
     }
 
-    void end_turn() {
+    void start_turn() {
         if (barricade) barricade--;
         else block = 0;
     }
@@ -290,6 +290,7 @@ string enemy_intention_to_string(string intend) {
         mx = i;
     }
 
+    ret.erase(ret.end() - 3, ret.end());
     return ret;
 }
 
@@ -303,12 +304,13 @@ void discard_hand(player* pl, pile* pl_cards) {
 
 void print_game(player* pl, pile* pl_cards, enemy* en) {
     cls();
+    cout << pl->name << " the ironclad\t\t\t\t" << en->name << std::endl;
     cout << "HP: " << pl->hp << "\t\t\t\t\tEnemy HP: " << en->hp << "\n";
     cout << "Block: " << pl->block << "\t\t\t\tEnemy block:" << en->block << "\n";
-    cout << "Mana: " << pl->mana << "\t\t\t\t\tEnemy intention: " << enemy_intention_to_string(en->intention) << "\n";
+    cout << "Mana: " << pl->mana << "\t\t\t\t\tEnemy intent: " << enemy_intention_to_string(en->intention) << "\n";
     for (unsigned long int i = 0; i < pl_cards->hand.size(); i++) {
-        cout << "(" << i+1 << ") " << pl_cards->hand.at(i).name << " ::\t" << pl_cards->hand.at(i).desc
-             << "\t\t:: Mana cost: " << pl_cards->hand.at(i).cost << std::endl;
+        cout << "(" << i+1 << ") " << pl_cards->hand.at(i).name << "\t\t:: " << pl_cards->hand.at(i).desc
+             << "  \t\t:: Mana cost: " << pl_cards->hand.at(i).cost << std::endl;
     }
 }
 
@@ -395,6 +397,7 @@ int main() {
     start_fight(&pl, &pl_pile);
     bool fight = true;
     char choice;
+    pl.name = "Jan";
     while (fight) {
         start_turn(&pl, &pl_pile);
         en_main.get_intention();
@@ -405,8 +408,8 @@ int main() {
                 play_card_from_hand(&pl, &pl_pile, &en_main, (int)(choice - '0')-1);
             print_game(&pl, &pl_pile, &en_main);
         }
+        en_main.start_turn();
         en_main.commit_intention(&pl, &pl_pile);
-        en_main.end_turn();
         choice = '0';
     }
 }
