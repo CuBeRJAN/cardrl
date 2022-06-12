@@ -318,7 +318,7 @@ void eval_effect(char effect[EFFECT_LENGTH], player* plr, enemy* en, pile* pl_pi
         if (isdigit(effect[i])) tmpnum += (effect[i] - '0');
         // Here we check the conditions
         else if (effect[i+1] == '\0' || (isdigit(effect[i-1]) && (
-                                                                  (effect[i+1] == 'a') ||
+                                                                  (effect[i+1] == 'a') || // "always" condition i.e. no condition
                                                                   (effect[i+1] == 'w' && en->weak) || // check for enemy weaken condition
                                                                   (effect[i+1] == 'W' && plr->weak)
                                                                   ))) {
@@ -349,6 +349,7 @@ void eval_effect(char effect[EFFECT_LENGTH], player* plr, enemy* en, pile* pl_pi
                 tmpnum = 0;
             }
         }
+        else tmpnum = 0;
     }
 }
 
