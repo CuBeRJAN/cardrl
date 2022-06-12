@@ -275,6 +275,7 @@ void check_bufferlen();
 class player { // TODO: There surely is a cleaner way than having 20000 variables for status effects
 public:
     string name;
+    int vulnerable = 0;
     int drawcards = 4;
     int nlevel = 0; // level of enemies (not of descent!)
     int drawlimit = 10; // how many cards can be in hand at once
@@ -304,9 +305,9 @@ public:
         mana = maxmana; // refresh mana
     }
 
-    void damage(int dmg, int strength) {
-        int rdmg = (dmg + (dmg * (0.2 * strength)));
-        if (weak) rdmg *= 0.6;
+    void take_damage(int dmg) {
+        int rdmg = dmg;
+        if (vulnerable) rdmg *= 1.5;
         int obl = block;
         if (rdmg >= block) {
             block = 0;
@@ -316,7 +317,7 @@ public:
             block -= rdmg;
     }
 
-    int mult_dmg(int dmg, int strength) {
+    int mult_dmg_from(int dmg) {
         if (weak) return (dmg + (dmg * (0.2 * strength))) * 0.6;
         return (dmg + (dmg * (0.2 * strength)));
     }
@@ -340,6 +341,7 @@ public:
     void decrease_counters() {
         clear_block();
         if (poison) poison--;
+        if (vulnerable) vulnerable--;
         if (barricade) barricade--;
         if (weak) weak--;
         if (dont_discard_hand) dont_discard_hand--;
@@ -364,6 +366,7 @@ public:
     int mana;
     int hp;
     int maxhp;
+    int vulnerable = 0;
     int barricade = 0;
     int weak = 0;
     int block = 0;
@@ -385,7 +388,7 @@ public:
     }
 
 
-    int mult_dmg(int dmg, int strength) {
+    int mult_dmg_from(int dmg) {
         if (weak) return (dmg + (dmg * (0.2 * strength))) * 0.6;
         return (dmg + (dmg * (0.2 * strength)));
     }
@@ -394,9 +397,9 @@ public:
         if (!barricade) block = 0;
     }
 
-    void damage(int dmg, int strength) {
-        int rdmg = (dmg + (dmg * (0.2 * strength)));
-        if (weak) rdmg *= 0.6;
+    void take_damage(int dmg) {
+        int rdmg = dmg;
+        if (vulnerable) rdmg *= 1.5;
         int obl = block;
         if (rdmg >= block) {
             block = 0;
@@ -450,6 +453,7 @@ public:
     void decrease_counters() {
         clear_block();
         if (poison) poison--;
+        if (vulnerable) vulnerable--;
         if (barricade) barricade--;
         if (weak) weak--;
     }
@@ -515,7 +519,7 @@ void check_bufferlen() {
 // [h]eal, e[x]haust other card(s), [H]eal enemy, [D]amage player
 // [B]lock enemy, add [s]trength, add [S]trength to enemy
 // [w]eaken player, [W]eaken enemy, gain [m]ana
-// draw a [C]ard, enemy [l]ose 1 str
+// draw a [C]ard, enemy [l]ose str, player [L]ose str
 
 // there are 2 letters at the end, the second is a condition!
 // w means do only if enemy is [w]eak etc.
@@ -533,10 +537,10 @@ void eval_effect(char effect[EFFECT_LENGTH], player* plr, enemy* en, pile* pl_pi
                                                                   (effect[i+1] == 'w' && en->weak) || // check for enemy weaken condition
                                                                   (effect[i+1] == 'W' && plr->weak)
                                                                   ))) {
-            if (effect[i] == 'd') { en->damage(tmpnum, plr->strength);
-                buffer_queue(colors.red+"You hit for "+std::to_string(plr->mult_dmg(tmpnum, plr->strength))+" damage"+colors.end); tmpnum = 0; }
-            else if (effect[i] == 'D') { plr->damage(tmpnum, en->strength);
-                buffer_queue(colors.red+"You take "+std::to_string(plr->mult_dmg(tmpnum, plr->strength))+" damage"+colors.end); tmpnum = 0; }
+            if (effect[i] == 'd') { en->take_damage(plr->mult_dmg_from(tmpnum));
+                buffer_queue(colors.red+"You hit for "+std::to_string(plr->mult_dmg_from(tmpnum))+" damage"+colors.end); tmpnum = 0; }
+            else if (effect[i] == 'D') { plr->take_damage(en->mult_dmg_from(tmpnum));
+                buffer_queue(colors.red+"You take "+std::to_string(en->mult_dmg_from(tmpnum))+" damage"+colors.end); tmpnum = 0; }
             else if (effect[i] == 'b') { plr->addblock(tmpnum );
                 buffer_queue(colors.cyan+"You gain "+std::to_string(tmpnum)+" block"+colors.end); tmpnum = 0; }
             else if (effect[i] == 'B') { en->addblock(tmpnum );
@@ -551,6 +555,8 @@ void eval_effect(char effect[EFFECT_LENGTH], player* plr, enemy* en, pile* pl_pi
                 buffer_queue(colors.magenta+"You weaken enemy for "+std::to_string(tmpnum+1)+" more turn(s)"+colors.end); tmpnum = 0; }
             else if (effect[i] == 'l') { en->strength -= tmpnum;
                 buffer_queue(colors.red+"Enemy loses "+std::to_string(tmpnum+1)+" strength"+colors.end); tmpnum = 0; }
+            else if (effect[i] == 'L') { plr->strength -= tmpnum;
+                buffer_queue(colors.red+"You lose "+std::to_string(tmpnum+1)+" strength"+colors.end); tmpnum = 0; }
             else if (effect[i] == 'm') { plr->mana+=1; tmpnum = 0; }
             else if (effect[i] == 'c') {
                 for (int i = 0; i < tmpnum; i++) {
