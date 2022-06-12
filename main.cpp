@@ -1,4 +1,5 @@
 #include<iostream>
+#include<time.h>
 #include<chrono>
 #include<algorithm>
 #include<random>
@@ -508,7 +509,8 @@ void check_bufferlen() {
 // [b]lock, [d]amage enemy, dis[c]ard other cards, [p]oison
 // [h]eal, e[x]haust other card(s), [H]eal enemy, [D]amage player
 // [B]lock enemy, add [s]trength, add [S]trength to enemy
-// [w]eaken player, [W]eaken enemy
+// [w]eaken player, [W]eaken enemy, gain [m]ana
+// draw a [C]ard, enemy [l]ose 1 str
 
 // there are 2 letters at the end, the second is a condition!
 // w means do only if enemy is [w]eak etc.
@@ -542,6 +544,8 @@ void eval_effect(char effect[EFFECT_LENGTH], player* plr, enemy* en, pile* pl_pi
                 buffer_queue(colors.magenta+"Enemy weakens you for "+std::to_string(tmpnum)+" more turn(s)"+colors.end); tmpnum = 0; }
             else if (effect[i] == 'W') { en->weak += tmpnum+1; // +1 because weaken gets removed at start of enemy turn
                 buffer_queue(colors.magenta+"You weaken enemy for "+std::to_string(tmpnum+1)+" more turn(s)"+colors.end); tmpnum = 0; }
+            else if (effect[i] == 'l') { en->strength -= tmpnum;
+                buffer_queue(colors.red+"Enemy loses "+std::to_string(tmpnum+1)+" strength"+colors.end); tmpnum = 0; }
             else if (effect[i] == 'm') { plr->mana+=1; tmpnum = 0; }
             else if (effect[i] == 'c') {
                 for (int i = 0; i < tmpnum; i++) {
@@ -763,16 +767,21 @@ void init_game(vector<enemy>* env, vector<card>* crds) {
 
     // Add after all non-upgraded cards!
     // name - desc - effect - mana - rarity - color - type (0 attack, 1 skill)
-    // + after card name means upgraded ! each upgraded card has to follow this naming !
-    crds->push_back(card("Strike", "Deal 5 damage","5daD",1,0, colors.red,0));
-    crds->push_back(card("Defend", "Get 5 block","5baD",1,0, colors.cyan,1));
-    crds->push_back(card("Iron mask", "Get 10 block and discard another card", "91ba1caD",2,0, colors.cyan,1));
-    crds->push_back(card("Fear strike", "Deal 3 damage and apply 1 weak","3da1WaD",1,0, colors.magenta,0));
+    // '+' after card name means upgraded ! each upgraded card has to follow this naming !
+    // TODO: shuffle curse, vulnerable, can't draw more this turn
+    crds->push_back(card("Strike", "Deal 5 damage","5daD",0,0, colors.red,0));
+    crds->push_back(card("Defend", "Get 5 block","5baD",0,0, colors.cyan,1));
+    crds->push_back(card("Iron mask", "Get 10 block and discard another card", "91ba1caD",1,0, colors.cyan,1));
+    crds->push_back(card("Fear strike", "Deal 3 damage and apply 1 weak","3da1WaD",0,0, colors.magenta,0));
     crds->push_back(card("Instinct", "Deal 4 damage, if enemy is weak don't lose mana", "4d1mwD",1,1, colors.red,0));
-    crds->push_back(card("Strike+", "Deal 9 damage","9daD",1,4,colors.red,0));
-    crds->push_back(card("Defend+", "Get 8 block","8baD",1,4,colors.cyan,1));
-    crds->push_back(card("Iron mask+", "Get 13 block and discard another card", "94ba1caD",1,4,colors.cyan,1));
-    crds->push_back(card("Fear strike+", "Deal 5 damage and apply 1 weak","5da1WaD",0,0, colors.magenta,0));
+    crds->push_back(card("Pain", "Deal 12 damage and apply 2 weak", "93da1WaD",1,1, colors.red,0));
+    crds->push_back(card("Shockwave", "Deal 4 damage and gain 4 block", "4da4baD",1,1, colors.cyan,1));
+    crds->push_back(card("Clean strike", "Deal 6 damage and draw a card", "6da1CaD",1,1, colors.red,0));
+    crds->push_back(card("Boomerang", "Deal 3 damage 3 times and take 3 damage", "3da3da3da3DaD",1,1, colors.red,0));
+    crds->push_back(card("Claw", "Deal 4 damage twice", "4da4daD",1,1, colors.red,0));
+    crds->push_back(card("Sacrifice", "Gain 2 mana, lose 3 health", "2ma3DaD",1,1, colors.magenta,1));
+    crds->push_back(card("Crack the sky", "Deal 25 damage, exhaust", "992daE",1,1, colors.red,0));
+    crds->push_back(card("Disarm", "Enemy loses 4 strength", "4laD",1,1, colors.red,0));
 }
 
 vector<card> cards; // another global variable...
@@ -790,6 +799,28 @@ enemy pick_enemy(player* pl) {
     while (en.level != pl->nlevel)
         en = *select_randomly(enemies.begin(),enemies.end());
     return en;
+}
+
+bool one_chance_in(int max) {
+    if (rand()%(max-1+1)+1) return true;
+    else return false;
+}
+
+card select_random_card() {
+    card cr = *select_randomly(cards.begin(), cards.end());
+    while (true) {
+        if (cr.rarity == 2) {
+            if (!one_chance_in(3))
+                cr = *select_randomly(cards.begin(), cards.end());
+            else break;
+        }
+        if (cr.rarity == 3) {
+            if (one_chance_in(3))
+                cr = *select_randomly(cards.begin(), cards.end());
+            else break;
+        }
+    }
+    return cr;
 }
 
 // Pick random elite enemy from act
@@ -822,7 +853,7 @@ player create_player() {
 
 
 int main() {
-    srand(0);
+    srand(time(NULL));
     init_game(&enemies, &cards); // global variables
 
     // Initialize player and deck
