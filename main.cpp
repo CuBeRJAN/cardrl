@@ -728,6 +728,8 @@ void play_card_from_hand(player* pl, pile* pl_cards, enemy* en, int index) {
         cr = pl_cards->hand.at(index);
         if (pl_cards->hand.at(index).effect[strlen(pl_cards->hand.at(index).effect)-1] == 'D') // Discard card
             discard_from_hand(pl_cards, index);
+        if (pl_cards->hand.at(index).effect[strlen(pl_cards->hand.at(index).effect)-1] == 'E') // Exhaust card
+            exhaust_from_hand(pl_cards, index);
         eval_card(pl, pl_cards, en, cr);
     }
     else {
