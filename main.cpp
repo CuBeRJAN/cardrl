@@ -318,9 +318,9 @@ void eval_effect(char effect[EFFECT_LENGTH], player* plr, enemy* en, pile* pl_pi
             else if (effect[i] == 'S') { en->strength += tmpnum;
                 buffer_queue(colors.magenta+"Enemy gains "+std::to_string(tmpnum)+" strength"+colors.end); tmpnum = 0; }
             else if (effect[i] == 'w') { plr->weak += tmpnum+1; // +1 because weaken gets removed at the start of player turn
-                buffer_queue(colors.magenta+"Enemy weakens you for "+std::to_string(tmpnum)+" turns"+colors.end); tmpnum = 0; }
+                buffer_queue(colors.magenta+"Enemy weakens you for "+std::to_string(tmpnum)+" turn(s)"+colors.end); tmpnum = 0; }
             else if (effect[i] == 'W') { en->weak += tmpnum+1; // +1 because weaken gets removed at start of enemy turn
-                buffer_queue(colors.magenta+"You weaken enemy for "+std::to_string(tmpnum)+" turns"+colors.end); tmpnum = 0; }
+                buffer_queue(colors.magenta+"You weaken enemy for "+std::to_string(tmpnum+1)+" turn(s)"+colors.end); tmpnum = 0; }
             else if (effect[i] == 'c') {
                 for (int i = 0; i < tmpnum; i++) {
                     if (pl_pile->hand.size() > 0) {
