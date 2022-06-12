@@ -83,7 +83,11 @@ public:
     vector<card> draw;
 };
 
-class player {
+class player;
+void discard_hand(player*, pile*);
+void draw_hand(player*, pile*);
+
+class player { // TODO: There surely is a cleaner way than having 20000 variables for status effects
 public:
     string name;
     int drawcards = 4;
@@ -91,17 +95,28 @@ public:
     int barricade = 0; // don't lose block for x turns
     int gold = 0;
     int level = 0; // each act has a number of levels, stored here
-    int blockdiscard = 0; // don't discard hand for x turns
+    int dont_discard_hand = 0; // don't discard hand for x turns
+    int dont_draw = 0;
     int act = 0; // game is split into 3 acts, this stores the act number
     int poison = 0;
     int frail = 0; // weaken block cards
     int maxmana = 3;
     int mana;
-    int weak; // -1 weak each turn
+    int weak = 0; // -1 weak each turn
     int hp = 50;
     int maxhp = 50;
     int block = 0;
     int strength = 0;
+    bool confused = false; // confusion effect
+
+    void begin_turn(pile* pl_cards) {
+        pl_discard_hand(pl_cards);
+        if (!dont_draw)
+            draw_hand(this, pl_cards); // draw new cards
+        hp -= poison; // apply poison
+        if (hp < 1) end_game(); // end game if hp <= 0
+        mana = maxmana; // refresh mana
+    }
 
     void damage(int dmg, int strength) {
         int rdmg = (dmg + (dmg * (0.2 * strength)));
@@ -123,6 +138,24 @@ public:
 
     void remove_mana(int n) {
         mana -= n;
+    }
+
+    void clear_block() {
+        if (!barricade) block = 0;
+    }
+
+    void decrease_counters() {
+        clear_block();
+        if (poison) poison--;
+        if (barricade) barricade--;
+        if (weak) weak--;
+        if (dont_discard_hand) dont_discard_hand--;
+        if (dont_draw) dont_draw--;
+    }
+
+    void pl_discard_hand(pile* plc) {
+        if (!barricade)
+            discard_hand(this, plc);
     }
 };
 
@@ -187,15 +220,14 @@ public:
     }
 
     string get_intention() {
-        if (intention_counter >= intention_counter_max) {
+        if (intention_counter >= intention_counter_max-1) {
             shuffle_stringvec(&actions);
             intention_counter = 0;
         }
         else {
-            intention = actions.at(intention_counter);
             intention_counter++;
         }
-        intention = *select_randomly(actions.begin(),actions.end());
+        intention = actions.at(intention_counter);
         return intention;
     }
 
@@ -244,11 +276,10 @@ void buffer_queue();
 // d = dmg
 // p = pois
 // b = block
-// last char is return value ([D]iscard, [E]xhaust, [R]eturn to hand)
 // 92d3b3p means 11 damage, 3 block and 3 poison
-// [b]lock, [d]amage enemy, dis[c]ard other card(s), [p]oison
+// [b]lock, [d]amage enemy, dis[c]ard other cards, [p]oison
 // [h]eal, e[x]haust other card(s), [H]eal enemy, [D]amage player
-// [B]lock enemy
+// [B]lock enemy, add [s]trength, add [S]trength to enemy
 void eval_effect(char effect[EFFECT_LENGTH], player* plr, enemy* en, pile* pl_pile) {
     buffer_flush();
     int tmpnum = 0;
@@ -265,6 +296,10 @@ void eval_effect(char effect[EFFECT_LENGTH], player* plr, enemy* en, pile* pl_pi
                 buffer_queue(colors.cyan+"You gain "+std::to_string(tmpnum)+" block"+colors.end); tmpnum = 0; }
             else if (effect[i] == 'B') { en->addblock(tmpnum );
                 buffer_queue(colors.cyan+"Enemy gains "+std::to_string(tmpnum)+" block"+colors.end); tmpnum = 0; }
+            else if (effect[i] == 's') { plr->strength += tmpnum;
+                buffer_queue(colors.magenta+"You gain "+std::to_string(tmpnum)+" strength"+colors.end); tmpnum = 0; }
+            else if (effect[i] == 'S') { en->strength += tmpnum;
+                buffer_queue(colors.magenta+"Enemy gains "+std::to_string(tmpnum)+" strength"+colors.end); tmpnum = 0; }
             else if (effect[i] == 'c') {
                 for (int i = 0; i < tmpnum; i++) {
                     if (pl_pile->hand.size() > 0) {
@@ -346,6 +381,7 @@ string enemy_intention_to_string(string intend) {
         else {
             if (intend[i] == 'D') { ret += ("Attack for " + std::to_string(tmpnum) + " damage. || "); tmpnum = 0; }
             else if (intend[i] == 'B') { ret += ("Apply " + std::to_string(tmpnum) + " block. || "); tmpnum = 0; }
+            else if (intend[i] == 'S') { ret += ("Gain " + std::to_string(tmpnum) + " strength. || "); tmpnum = 0; }
         }
         mx = i;
     }
@@ -374,31 +410,21 @@ void print_game(player* pl, pile* pl_cards, enemy* en) {
     cout << "Mana: " << colors.magenta << pl->mana << colors.end << "\t\t\t\t\t\t\t\t\t\t\t\tEnemy intent: " << colors.magenta << enemy_intention_to_string(en->intention) << colors.end << "\n";
     cout << string(111, '-') << "\n";
     string mydesc;
+    int cnt = 0; // Count number of cards so that message buffer is always at the same height
     for (unsigned long int i = 0; i < pl_cards->hand.size(); i++) {
+        cnt++;
         mydesc = pl_cards->hand.at(i).desc;
         while (mydesc.length() < 60) mydesc += " ";
         cout << pl_cards->hand.at(i).color << "(" << i+1 << ") " << pl_cards->hand.at(i).name << colors.end << "\t\t\t:: "
              << mydesc << colors.magenta
              << "\t" << ":: Mana cost: " << pl_cards->hand.at(i).cost << colors.end << std::endl;
     }
-    cout << "\n\n" << msgbuffer << "\n";
+    cout << string(pl->drawlimit-cnt,'\n') << msgbuffer << "\n";
 }
-
 
 // Start of turn function
 void start_turn(player* pl, pile* pl_cards) {
-    if (!pl->blockdiscard) // discard hand unless discard is blocked by effect
-        discard_hand(pl, pl_cards);
-    else
-        pl->blockdiscard--;
-    draw_hand(pl, pl_cards); // draw new cards
-    pl->hp -= pl->poison; // apply poison
-    if (pl->poison) pl->poison--; // decrease poison if any is applied
-    if (pl->weak) pl->weak--; // decrease weaken
-    if (pl->barricade) pl->barricade--; // decrease barricade turns left
-    else pl->block = 0; // else remove all block
-    if (pl->hp < 1) end_game(); // end game if hp <= 0
-    pl->mana = pl->maxmana; // refresh mana
+    pl->begin_turn(pl_cards);
 }
 
 void eval_card(player* pl, pile* pl_pile, enemy* en, card crd) {
@@ -406,7 +432,7 @@ void eval_card(player* pl, pile* pl_pile, enemy* en, card crd) {
     print_game(pl, pl_pile, en);
     char tmpef[EFFECT_LENGTH];
     strcpy(tmpef, crd.effect);
-    tmpef[strlen(tmpef)-1] = '\0';
+    tmpef[strlen(tmpef)-1] = '\0'; // We need to remove the last char of the string, since it stores return value of card and is not part of effect
     eval_effect(tmpef, pl, en, pl_pile);
 }
 
@@ -422,12 +448,13 @@ void exhaust_from_hand(pile* pl_cards, int index) {
     pl_cards->hand.erase(pl_cards->hand.begin() + index);
 }
 
+// last char is return value ([D]iscard, [E]xhaust, [R]eturn to hand) -- NOT IN THIS FUNC ANYMORE
 // activate card from hand
 void play_card_from_hand(player* pl, pile* pl_cards, enemy* en, int index) {
     if (pl->mana >= pl_cards->hand.at(index).cost) {
         card cr = pl_cards->hand.at(index); // Card has to be discarded / exhausted before effect is evaluated, so we make a copy we use to evaluate
         cr = pl_cards->hand.at(index);
-        if (pl_cards->hand.at(index).effect[strlen(pl_cards->hand.at(index).effect)-1] == 'D')
+        if (pl_cards->hand.at(index).effect[strlen(pl_cards->hand.at(index).effect)-1] == 'D') // Discard card
             discard_from_hand(pl_cards, index);
         eval_card(pl, pl_cards, en, cr);
     }
@@ -441,7 +468,7 @@ void create_fight(player* pl, pile* plc, enemy* en_main) {
     start_fight(pl, plc);
     bool fight = true;
     char choice;
-    while (fight) {
+    while(fight) {
         start_turn(pl, plc);
         en_main->get_intention();
         print_game(pl, plc, en_main);
@@ -467,7 +494,8 @@ void create_fight(player* pl, pile* plc, enemy* en_main) {
 //       possibly use a vector which will point to each card's variants?
 void init_game(vector<enemy>* env, vector<card>* crds) {
     // Name, HP, level, effects
-    env->push_back(enemy("Goblin",20,1,{"6D","5B"}));
+    env->push_back(enemy("Goblin",20,0,{"6D","5B"}));
+    env->push_back(enemy("Strong goblin",35,3,{"93D","91B","93D","91B","93D","91B","1S"}));
     /* Define cards TODO: read from a database file */
     // TODO: define card pairings for upgraded variants
     //       possibly use a vector which will point to each card's variants?
@@ -478,8 +506,33 @@ void init_game(vector<enemy>* env, vector<card>* crds) {
     crds->push_back(card("Strike+", "Deal 9 damage","9dD",1,4,colors.red,0));
     crds->push_back(card("Defend+", "Get 8 block","8bD",1,4,colors.cyan,1));
     crds->push_back(card("Iron mask+", "Get 13 block and discard another card", "94b1cD",1,4,colors.cyan,1));
-
 }
+
+vector<card> cards; // another global variable...
+std::vector<enemy> enemies;
+void upgrade_card(pile* plc, int index) {
+    for (long unsigned int i = 0; i < cards.size(); i++) {
+        if (cards.at(i).name == plc->deck.at(index).name+"+")
+            plc->deck.at(index) = cards.at(i);
+    }
+}
+
+// Pick random enemy from act
+enemy pick_enemy(player* pl) {
+    enemy en = *select_randomly(enemies.begin(),enemies.end());
+    while (en.level != pl->act)
+        en = *select_randomly(enemies.begin(),enemies.end());
+    return en;
+}
+
+// Pick random elite enemy from act
+enemy pick_elite_enemy(player* pl) {
+    enemy en = *select_randomly(enemies.begin(),enemies.end());
+    while (en.level != pl->act+3) // 3-6 are elites for act 0-2
+        en = *select_randomly(enemies.begin(),enemies.end());
+    return en;
+}
+
 
 // Create deck at the beginning of the game
 pile create_deck(vector<card> crds) {
@@ -500,17 +553,15 @@ player create_player() {
     return pl;
 }
 
-int main() {
-    std::vector<enemy> enemies;
-    vector<card> cards;
 
-    init_game(&enemies, &cards);
+int main() {
+    init_game(&enemies, &cards); // global variables
 
     // Initialize player and deck
     player pl = create_player();
     pile pl_pile = create_deck(cards);
     // Initialize enemy
-    enemy en_main = enemies.at(0); // Goblin enemy
+    enemy en_main = pick_elite_enemy(&pl); // Goblin enemy
 
 
     create_fight(&pl, &pl_pile, &en_main);
