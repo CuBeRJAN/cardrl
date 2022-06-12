@@ -780,7 +780,7 @@ void init_game(vector<enemy>* env, vector<card>* crds) {
     crds->push_back(card("Boomerang", "Deal 3 damage 3 times and take 3 damage", "3da3da3da3DaD",1,1, colors.red,0));
     crds->push_back(card("Claw", "Deal 4 damage twice", "4da4daD",1,1, colors.red,0));
     crds->push_back(card("Sacrifice", "Gain 2 mana, lose 3 health", "2ma3DaD",1,1, colors.magenta,1));
-    crds->push_back(card("Crack the sky", "Deal 25 damage, exhaust", "992daE",1,1, colors.red,0));
+    crds->push_back(card("Crack the sky", "Deal 25 damage, exhaust", "997daE",1,1, colors.red,0));
     crds->push_back(card("Disarm", "Enemy loses 4 strength", "4laD",1,1, colors.red,0));
 }
 
