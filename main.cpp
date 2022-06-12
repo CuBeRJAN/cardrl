@@ -633,7 +633,8 @@ void draw_hand(player* pl, pile* pl_cards) {
 }
 
 // make intention into readable string
-string enemy_intention_to_string(string intend) {
+string enemy_intention_to_string(enemy* en) {
+    string intend = en->intention;
     int tmpnum = 0;
     string ret = "";
     int mx;
@@ -641,7 +642,7 @@ string enemy_intention_to_string(string intend) {
         if (intend[i] == '\0') break;
         if (isdigit(intend[i])) tmpnum += (intend[i] - '0');
         else {
-            if (intend[i] == 'D') { ret += ("Attack for " + std::to_string(tmpnum) + " damage. || "); tmpnum = 0; }
+            if (intend[i] == 'D') { ret += ("Attack for " + std::to_string(en->mult_dmg_from(tmpnum)) + " damage. || "); tmpnum = 0; }
             else if (intend[i] == 'B') { ret += ("Apply " + std::to_string(tmpnum) + " block. || "); tmpnum = 0; }
             else if (intend[i] == 'S') { ret += ("Gain " + std::to_string(tmpnum) + " strength. || "); tmpnum = 0; }
             else if (intend[i] == 'w') { ret += ("Weaken " + std::to_string(tmpnum) + " turns. || "); tmpnum = 0; }
@@ -674,7 +675,7 @@ void print_game(player* pl, pile* pl_cards, enemy* en) {
          << colors.yellow << pl_cards->discard.size() << " cards\n" << colors.end;
     cout << "HP: " << colors.green << pl->hp << colors.end << "\t\t\t\t\t\t\t\t\t\t\t\tEnemy HP: " << colors.green << en->hp << colors.end << "\n";
     cout << "Block: " << colors.cyan << pl->block << colors.end << "\t\t\t\t\t\t\t\t\t\t\tEnemy block: " << colors.cyan << en->block << colors.end << "\n";
-    cout << "Mana: " << colors.magenta << pl->mana << colors.end << "\t\t\t\t\t\t\t\t\t\t\t\tEnemy intent: " << colors.magenta << enemy_intention_to_string(en->intention) << colors.end << "\n";
+    cout << "Mana: " << colors.magenta << pl->mana << colors.end << "\t\t\t\t\t\t\t\t\t\t\t\tEnemy intent: " << colors.magenta << enemy_intention_to_string(en) << colors.end << "\n";
     cout << string(111, '-') << "\n";
     string mydesc;
     int cnt = 0; // Count number of cards so that message buffer is always at the same height
@@ -728,7 +729,7 @@ void play_card_from_hand(player* pl, pile* pl_cards, enemy* en, int index) {
         cr = pl_cards->hand.at(index);
         if (pl_cards->hand.at(index).effect[strlen(pl_cards->hand.at(index).effect)-1] == 'D') // Discard card
             discard_from_hand(pl_cards, index);
-        if (pl_cards->hand.at(index).effect[strlen(pl_cards->hand.at(index).effect)-1] == 'E') // Exhaust card
+        else if (pl_cards->hand.at(index).effect[strlen(pl_cards->hand.at(index).effect)-1] == 'E') // Exhaust card
             exhaust_from_hand(pl_cards, index);
         eval_card(pl, pl_cards, en, cr);
     }
