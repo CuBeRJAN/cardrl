@@ -131,7 +131,7 @@ public:
             block -= rdmg;
     }
 
-    int to_self_dmg(int dmg, int strength) {
+    int mult_dmg(int dmg, int strength) {
         return (dmg + (dmg * (0.2 * strength)));
     }
 
@@ -198,7 +198,7 @@ public:
     }
 
 
-    int to_self_dmg(int dmg, int strength) {
+    int mult_dmg(int dmg, int strength) {
         return (dmg + (dmg * (0.2 * strength)));
     }
 
@@ -305,6 +305,10 @@ void buffer_queue();
 // [h]eal, e[x]haust other card(s), [H]eal enemy, [D]amage player
 // [B]lock enemy, add [s]trength, add [S]trength to enemy
 // [w]eaken player, [W]eaken enemy
+
+// there are 2 letters at the end, the second is a condition!
+// w means do only if enemy is [w]eak etc.
+// [a]lways
 void eval_effect(char effect[EFFECT_LENGTH], player* plr, enemy* en, pile* pl_pile) {
     buffer_flush();
     int tmpnum = 0;
@@ -312,11 +316,16 @@ void eval_effect(char effect[EFFECT_LENGTH], player* plr, enemy* en, pile* pl_pi
         if (effect[i] == '\0') break;
 
         if (isdigit(effect[i])) tmpnum += (effect[i] - '0');
-        else {
+        // Here we check the conditions
+        else if (effect[i+1] == '\0' || (isdigit(effect[i-1]) && (
+                                                                  (effect[i+1] == 'a') ||
+                                                                  (effect[i+1] == 'w' && en->weak) || // check for enemy weaken condition
+                                                                  (effect[i+1] == 'W' && plr->weak)
+                                                                  ))) {
             if (effect[i] == 'd') { en->damage(tmpnum, plr->strength);
-                buffer_queue(colors.red+"You hit for "+std::to_string(plr->to_self_dmg(tmpnum, plr->strength))+" damage"+colors.end); tmpnum = 0; }
+                buffer_queue(colors.red+"You hit for "+std::to_string(plr->mult_dmg(tmpnum, plr->strength))+" damage"+colors.end); tmpnum = 0; }
             else if (effect[i] == 'D') { plr->damage(tmpnum, en->strength);
-                buffer_queue(colors.red+"You take "+std::to_string(plr->to_self_dmg(tmpnum, plr->strength))+" damage"+colors.end); tmpnum = 0; }
+                buffer_queue(colors.red+"You take "+std::to_string(plr->mult_dmg(tmpnum, plr->strength))+" damage"+colors.end); tmpnum = 0; }
             else if (effect[i] == 'b') { plr->addblock(tmpnum );
                 buffer_queue(colors.cyan+"You gain "+std::to_string(tmpnum)+" block"+colors.end); tmpnum = 0; }
             else if (effect[i] == 'B') { en->addblock(tmpnum );
@@ -509,7 +518,7 @@ void play_card_from_hand(player* pl, pile* pl_cards, enemy* en, int index) {
 void create_fight(player* pl, pile* plc, enemy* en_main) {
     start_fight(pl, plc);
     bool fight = true;
-    char choice;
+    char choice = '0';
     while(fight) {
         start_turn(pl, plc);
         en_main->get_intention();
@@ -529,7 +538,6 @@ void create_fight(player* pl, pile* plc, enemy* en_main) {
         }
         en_main->begin_turn();
         en_main->commit_intention(pl, plc);
-        choice = '0';
     }
 
 }
@@ -540,24 +548,24 @@ void init_game(vector<enemy>* env, vector<card>* crds) {
     // +100 to level is elite
     // Levels 0-2 are all act one, just different difficulties
     // Name, HP, level, effects
-    env->push_back(enemy("Goblin",20,0,{"6D","5B"}));
-    env->push_back(enemy("Goblin",30,1,{"8D","9B","9D"}));
-    env->push_back(enemy("Cultist",30,1,{"8D","7B","2S"}));
-    env->push_back(enemy("Cultist",30,2,{"12D","10B","2S"}));
-    env->push_back(enemy("Hobgoblin",30,1,{"8D","7B","2w"}));
-    env->push_back(enemy("Strong goblin",35,101,{"93D","91B","93D","91B","93D","91B","1S"})); // elite goblin, level 1
+    env->push_back(enemy("Goblin",20,0,{"6Da","5Ba"}));
+    env->push_back(enemy("Goblin",30,1,{"8Da","9Ba","9Da"}));
+    env->push_back(enemy("Cultist",30,1,{"8Da","7Ba","2Sa"}));
+    env->push_back(enemy("Cultist",30,2,{"12Da","10Ba","2Sa"}));
+    env->push_back(enemy("Hobgoblin",30,1,{"8Da","7Ba","2wa"}));
+    env->push_back(enemy("Strong goblin",35,101,{"93Da","91Ba","93Da","91Ba","93Da","91Ba","6Sa"}));
 
     // Add after all non-upgraded cards!
     // name - desc - effect - mana - rarity - color - type (0 attack, 1 skill)
     // + after card name means upgraded ! each upgraded card has to follow this naming !
-    crds->push_back(card("Strike", "Deal 5 damage","5dD",1,0, colors.red,0));
-    crds->push_back(card("Defend", "Get 5 block","5bD",1,0, colors.cyan,1));
-    crds->push_back(card("Iron mask", "Get 10 block and discard another card", "91b1cD",1,0, colors.cyan,1));
-    crds->push_back(card("Fear strike", "Deal 3 damage and apply 1 weak","3d1WD",0,0, colors.magenta,0));
-    crds->push_back(card("Strike+", "Deal 9 damage","9dD",1,4,colors.red,0));
-    crds->push_back(card("Defend+", "Get 8 block","8bD",1,4,colors.cyan,1));
-    crds->push_back(card("Iron mask+", "Get 13 block and discard another card", "94b1cD",1,4,colors.cyan,1));
-    crds->push_back(card("Fear strike+", "Deal 5 damage and apply 1 weak","5d1WD",0,0, colors.magenta,0));
+    crds->push_back(card("Strike", "Deal 5 damage","5daD",1,0, colors.red,0));
+    crds->push_back(card("Defend", "Get 5 block","5baD",1,0, colors.cyan,1));
+    crds->push_back(card("Iron mask", "Get 10 block and discard another card", "91ba1caD",1,0, colors.cyan,1));
+    crds->push_back(card("Fear strike", "Deal 3 damage and apply 1 weak","3da1WaD",0,0, colors.magenta,0));
+    crds->push_back(card("Strike+", "Deal 9 damage","9daD",1,4,colors.red,0));
+    crds->push_back(card("Defend+", "Get 8 block","8baD",1,4,colors.cyan,1));
+    crds->push_back(card("Iron mask+", "Get 13 block and discard another card", "94ba1caD",1,4,colors.cyan,1));
+    crds->push_back(card("Fear strike+", "Deal 5 damage and apply 1 weak","5da1WaD",0,0, colors.magenta,0));
 }
 
 vector<card> cards; // another global variable...
