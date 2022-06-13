@@ -654,7 +654,7 @@ void eval_effect(char effect[EFFECT_LENGTH], player* plr, enemy* en, pile* pl_pi
                         else break;
                     }
                     tmpnum = 0;
-                break;
+                    break;
             }
         }
         else tmpnum = 0;
