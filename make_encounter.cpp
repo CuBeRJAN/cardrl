@@ -52,7 +52,6 @@ void NodeAdd(vector_tree<string>* my_tree) {
     else {
         cout << "\nNode '" << select << "' doesn't exist.\n";
     }
-    getchar();
     cin.ignore();
 }
 
@@ -70,7 +69,6 @@ void NodeRemove(vector_tree<string>* my_tree) {
     else {
         cout << "\nNode '0' can't be removed.\n";
     }
-    getchar();
     cin.ignore();
 }
 
@@ -89,7 +87,6 @@ void NodeAssign(vector_tree<string>* my_tree) {
     else {
         cout << "\nNode '" << select << "' doesn't exist.\n";
     }
-    cin.ignore();
 }
 
 void NodeNodes(vector_tree<string>* my_tree) {
