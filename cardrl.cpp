@@ -1080,6 +1080,7 @@ vector_tree<string> get_random_encounter_tree() {
 }
 
 void eval_encounter(player* pl, pile* plc, vector_tree<string>* enc) {
+    enemy en = enemy("", 0, 0, { }); // Need dummy enemy to evaluate effect
     int pos = 0;
     bool isEven = true;
     vector<int> nodes;
@@ -1089,8 +1090,11 @@ void eval_encounter(player* pl, pile* plc, vector_tree<string>* enc) {
     cin.ignore();
     while (true) {
         if (enc->getChildren(pos).size()) {
-            if (enc->getName(enc->getChildren(pos).at(0)).at(0) == '_')
+            if (enc->getName(enc->getChildren(pos).at(0)).at(0) == '_') {
+                ef = enc->getName(enc->getChildren(pos).at(0));
+                ef.erase(ef.begin(),ef.begin()+1);
                 break;
+            }
             else {
                 if (isEven) {
                     cout << enc->getName(pos) << "\n\n";
@@ -1107,10 +1111,10 @@ void eval_encounter(player* pl, pile* plc, vector_tree<string>* enc) {
                 isEven = !isEven;
             }
         }
-        else {
-            break;
-        }
     }
+    char e[EFFECT_LENGTH];
+    strcpy(e, ef.c_str());
+    eval_effect(e, pl, &en ,plc);
 }
 
 void random_encounter(player* pl, pile* plc) {
