@@ -1,4 +1,7 @@
-﻿#include<iostream>
+﻿// komentáře jsou v angličtině protože jsem na to zvyklý
+// projekt je možná zbytečně dlouhý, ale jen protože mě docela baví na něm pracovat
+// některé části kódu jsou "vypůjčené" ale jsou to asi jen 2 funkce a je u nich komentář
+#include<iostream>
 #include<sstream>
 #include<time.h>
 #include<chrono>
@@ -12,8 +15,15 @@
 #include<fstream>
 #include "cpptree.h" // https://github.com/CuBeRJAN/cpptree
                      // it's not stealing if it's my own library
+                     //
+                     // I know full definitions shouldn't be in headers,
+                     // but it's not possible to declare a template class otherwise
+                     // https://isocpp.org/wiki/faq/templates#templates-defn-vs-decl
 
-#define EFFECT_LENGTH 100
+// TODO: Proper header file
+
+#define EFFECT_LENGTH 100 // max length of effect
+#define ENCOUNTERS_PATH "./encounters" // define where the random encounter database is stored
 
 
 // This game is a Slay the Spire ripoff
@@ -49,7 +59,7 @@ Iter select_randomly(Iter start, Iter end) {
 }
 
 
-// This part is copied code
+// the key_press() function is copied code too
 #if defined(_WIN32)
 #define WIN32_LEAN_AND_MEAN
 #define VC_EXTRALEAN
@@ -328,16 +338,17 @@ public:
     }
 
 
-    // piercing damage
+    // piercing damage / poison
     void take_damage_forced(int dmg) {
         int rdmg = dmg;
         if (vulnerable) rdmg *= 1.5;
         hp -= rdmg;
     }
 
+    // multiply outgoing damage
     int mult_dmg_from(int dmg) {
         if (weak) return (dmg + (dmg * (0.2 * strength))) * 0.6;
-        return (dmg + (dmg * (0.2 * strength)));
+        return (dmg + (dmg * (0.2 * strength))); // maybe change this calculation somehow, strength is way too impactful
     }
 
     int mult_dmg_to(int dmg) {
@@ -379,7 +390,7 @@ public:
     }
 
     void pl_discard_hand(pile* plc) {
-        if (!barricade)
+        if (!dont_discard_hand)
             discard_hand(this, plc);
     }
 };
@@ -397,7 +408,7 @@ public:
     int hp;
     int maxhp;
     int vulnerable = 0;
-    int barricade = 0;
+    int barricade = 0; // don't discard block for x turns
     int weak = 0;
     int block = 0;
     int strength = 0;
@@ -560,7 +571,9 @@ void check_bufferlen() {
         msgbuffer += '\n';
 }
 
-// Evaluate effect of card
+// Evaluate effect
+// handles effects for cards, enemy attacks, random encounter effects, pretty much every effect in the game
+// Effect is a C-style string, the description of how the effect string is interpreted is in the comment below
 // d = dmg
 // p = pois
 // b = block
@@ -1056,8 +1069,8 @@ vector_tree<string> read_tree_from_file(string filename, int offset){
     vector<string> names;
 
 	getline(file, line);
-    relations = split_string_get_int(line, '^');
-	getline(file, line);
+    relations = split_string_get_int(line, '^'); // the '^' symbol is used to separate items in the vector file output
+	getline(file, line);                         // don't use '^' in the random encounter texts or bad things will happen
     names = split_string(line, '^');
 
     vector_tree<string> ret;
@@ -1066,13 +1079,15 @@ vector_tree<string> read_tree_from_file(string filename, int offset){
     return ret;
 }
 
+// just get a random number in a range
 int get_random_in_range(int min, int max) {
     return min + (rand() % max);
 }
 
+// Pick a random encounter tree from database
 vector_tree<string> get_random_encounter_tree() {
-    string fi = "./encounters";
-    int lines = count_lines_in_file(fi);
+    string fi = ENCOUNTERS_PATH;
+    int lines = count_lines_in_file(fi); // a slightly ugly solution
     int halflines = lines/2;
     int r = get_random_in_range(0,halflines);
     vector_tree<string> enc = read_tree_from_file(fi, (r*2));
@@ -1123,6 +1138,8 @@ void eval_encounter(player* pl, pile* plc, vector_tree<string>* enc) {
 // The encounters are taken from the database
 // Theres an interface for adding new encounters, 'make_encounter.cpp', once an encounter is prepared you can append to the end
 // of database with 'q' on the keyboard
+// it's a bit complex, but I really don't like implementing 20 000 different functions for different encounters
+// also I wanted to use my tree library
 void random_encounter(player* pl, pile* plc) {
     vector_tree<string> enc = get_random_encounter_tree();
     eval_encounter(pl, plc, &enc);
