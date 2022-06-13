@@ -323,6 +323,14 @@ public:
             block -= rdmg;
     }
 
+
+    // piercing damage
+    void take_damage_forced(int dmg) {
+        int rdmg = dmg;
+        if (vulnerable) rdmg *= 1.5;
+        hp -= rdmg;
+    }
+
     int mult_dmg_from(int dmg) {
         if (weak) return (dmg + (dmg * (0.2 * strength))) * 0.6;
         return (dmg + (dmg * (0.2 * strength)));
@@ -355,6 +363,8 @@ public:
     }
 
     void decrease_counters() {
+        if (poison)
+            take_damage_forced(poison);
         clear_block();
         if (poison) poison--;
         if (vulnerable) vulnerable--;
@@ -436,6 +446,13 @@ public:
             block -= rdmg;
     }
 
+    // piercing damage
+    void take_damage_forced(int dmg) {
+        int rdmg = dmg;
+        if (vulnerable) rdmg *= 1.5;
+        hp -= rdmg;
+    }
+
     bool check_hp() {
         if (hp < 1) {
             return false;
@@ -474,6 +491,8 @@ public:
 
     void begin_turn() {
         if (barricade) barricade--;
+        if (poison)
+            take_damage_forced(poison);
         else block = 0;
     }
 
@@ -564,56 +583,61 @@ void eval_effect(char effect[EFFECT_LENGTH], player* plr, enemy* en, pile* pl_pi
             (effect[i + 1] == 'w' && en->weak) || // check for enemy weaken condition
             (effect[i + 1] == 'W' && plr->weak)
             ))) {
-            if (effect[i] == 'd') {
-                en->take_damage(plr->mult_dmg_from(tmpnum));
-                buffer_queue(colors.red + "You hit for " + std::to_string(plr->mult_dmg_from(tmpnum)) + " damage" + colors.end); tmpnum = 0;
-            }
-            else if (effect[i] == 'D') {
-                plr->take_damage(en->mult_dmg_from(tmpnum));
-                buffer_queue(colors.red + "You take " + std::to_string(en->mult_dmg_from(tmpnum)) + " damage" + colors.end); tmpnum = 0;
-            }
-            else if (effect[i] == 'b') {
-                plr->addblock(tmpnum);
-                buffer_queue(colors.cyan + "You gain " + std::to_string(tmpnum) + " block" + colors.end); tmpnum = 0;
-            }
-            else if (effect[i] == 'B') {
-                en->addblock(tmpnum);
-                buffer_queue(colors.cyan + "Enemy gains " + std::to_string(tmpnum) + " block" + colors.end); tmpnum = 0;
-            }
-            else if (effect[i] == 's') {
-                plr->strength += tmpnum;
-                buffer_queue(colors.magenta + "You gain " + std::to_string(tmpnum) + " strength" + colors.end); tmpnum = 0;
-            }
-            else if (effect[i] == 'S') {
-                en->strength += tmpnum;
-                buffer_queue(colors.magenta + "Enemy gains " + std::to_string(tmpnum) + " strength" + colors.end); tmpnum = 0;
-            }
-            else if (effect[i] == 'w') {
-                plr->weak += tmpnum + 1; // +1 because weaken gets removed at the start of player turn
-                buffer_queue(colors.magenta + "Enemy weakens you for " + std::to_string(tmpnum) + " more turn(s)" + colors.end); tmpnum = 0;
-            }
-            else if (effect[i] == 'W') {
-                en->weak += tmpnum + 1; // +1 because weaken gets removed at start of enemy turn
-                buffer_queue(colors.magenta + "You weaken enemy for " + std::to_string(tmpnum + 1) + " more turn(s)" + colors.end); tmpnum = 0;
-            }
-            else if (effect[i] == 'l') {
-                en->strength -= tmpnum;
-                buffer_queue(colors.red + "Enemy loses " + std::to_string(tmpnum + 1) + " strength" + colors.end); tmpnum = 0;
-            }
-            else if (effect[i] == 'L') {
-                plr->strength -= tmpnum;
-                buffer_queue(colors.red + "You lose " + std::to_string(tmpnum + 1) + " strength" + colors.end); tmpnum = 0;
-            }
-            else if (effect[i] == 'm') { plr->mana += 1; tmpnum = 0; }
-            else if (effect[i] == 'c') {
-                for (int i = 0; i < tmpnum; i++) {
-                    if (pl_pile->hand.size() > 0) {
-                        int choice = select_from_hand(pl_pile, "Select a card to discard: ");
-                        discard_from_hand(pl_pile, choice);
+            switch (effect[i]) {
+                case 'd':
+                    en->take_damage(plr->mult_dmg_from(tmpnum));
+                    buffer_queue(colors.red + "You hit for " + std::to_string(plr->mult_dmg_from(tmpnum)) + " damage" + colors.end); tmpnum = 0;
+                    break;
+                case 'D':
+                    plr->take_damage(en->mult_dmg_from(tmpnum));
+                    buffer_queue(colors.red + "You take " + std::to_string(en->mult_dmg_from(tmpnum)) + " damage" + colors.end); tmpnum = 0;
+                    break;
+                case 'b':
+                    plr->addblock(tmpnum);
+                    buffer_queue(colors.cyan + "You gain " + std::to_string(tmpnum) + " block" + colors.end); tmpnum = 0;
+                    break;
+                case 'B':
+                    en->addblock(tmpnum);
+                    buffer_queue(colors.cyan + "Enemy gains " + std::to_string(tmpnum) + " block" + colors.end); tmpnum = 0;
+                    break;
+                case 's':
+                    plr->strength += tmpnum;
+                    buffer_queue(colors.magenta + "You gain " + std::to_string(tmpnum) + " strength" + colors.end); tmpnum = 0;
+                    break;
+                case 'S':
+                    en->strength += tmpnum;
+                    buffer_queue(colors.magenta + "Enemy gains " + std::to_string(tmpnum) + " strength" + colors.end); tmpnum = 0;
+                    break;
+                case 'w':
+                    plr->weak += tmpnum + 1; // +1 because weaken gets removed at the start of player turn
+                    buffer_queue(colors.magenta + "Enemy weakens you for " + std::to_string(tmpnum) + " more turn(s)" + colors.end); tmpnum = 0;
+                    break;
+                case 'W':
+                    en->weak += tmpnum + 1; // +1 because weaken gets removed at start of enemy turn
+                    buffer_queue(colors.magenta + "You weaken enemy for " + std::to_string(tmpnum + 1) + " more turn(s)" + colors.end); tmpnum = 0;
+                    break;
+                case 'l':
+                    en->strength -= tmpnum;
+                    buffer_queue(colors.red + "Enemy loses " + std::to_string(tmpnum + 1) + " strength" + colors.end); tmpnum = 0;
+                    break;
+                case 'L':
+                    plr->strength -= tmpnum;
+                    buffer_queue(colors.red + "You lose " + std::to_string(tmpnum + 1) + " strength" + colors.end); tmpnum = 0;
+                    break;
+                case 'm':
+                    plr->mana += 1; // mana is allowed over maxmana counter
+                    tmpnum = 0;
+                    break;
+                case 'c':
+                    for (int i = 0; i < tmpnum; i++) {
+                        if (pl_pile->hand.size() > 0) {
+                            int choice = select_from_hand(pl_pile, "Select a card to discard: ");
+                            discard_from_hand(pl_pile, choice);
+                        }
+                        else break;
                     }
-                    else break;
-                }
-                tmpnum = 0;
+                    tmpnum = 0;
+                break;
             }
         }
         else tmpnum = 0;
@@ -684,15 +708,15 @@ void draw_hand(player* pl, pile* pl_cards) {
 }
 
 // make intention into readable string
-string enemy_intention_to_string(enemy* en) {
+string enemy_intention_to_string(player*pl, enemy* en) {
     string intend = en->intention;
     int tmpnum = 0;
     string ret = "";
     for (int i = 0; i < EFFECT_LENGTH - 1; i++) {
         if (intend[i] == '\0') break;
         if (isdigit(intend[i])) tmpnum += (intend[i] - '0');
-        else {
-            if (intend[i] == 'D') { ret += ("Attack for " + std::to_string(en->mult_dmg_from(tmpnum)) + " damage. || "); tmpnum = 0; }
+        else {                                                           // multiply enemy damage by player taken damage
+            if (intend[i] == 'D') { ret += ("Attack for " + std::to_string(pl->mult_dmg_to(en->mult_dmg_from(tmpnum))) + " damage. || "); tmpnum = 0; }
             else if (intend[i] == 'B') { ret += ("Apply " + std::to_string(en->mult_block(tmpnum)) + " block. || "); tmpnum = 0; }
             else if (intend[i] == 'S') { ret += ("Gain " + std::to_string(tmpnum) + " strength. || "); tmpnum = 0; }
             else if (intend[i] == 'w') { ret += ("Weaken " + std::to_string(tmpnum) + " turns. || "); tmpnum = 0; }
@@ -785,7 +809,7 @@ void print_game(player* pl, pile* pl_cards, enemy* en) {
         << colors.yellow << pl_cards->discard.size() << " cards\n" << colors.end;
     cout << "HP: " << colors.green << pl->hp << colors.end << "\t\t\t\t\t\t\t\t\t\t\t\tEnemy HP: " << colors.green << en->hp << colors.end << "\n";
     cout << "Block: " << colors.cyan << pl->block << colors.end << "\t\t\t\t\t\t\t\t\t\t\tEnemy block: " << colors.cyan << en->block << colors.end << "\n";
-    cout << "Mana: " << colors.magenta << pl->mana << colors.end << "\t\t\t\t\t\t\t\t\t\t\t\tEnemy intent: " << colors.magenta << enemy_intention_to_string(en) << colors.end << "\n";
+    cout << "Mana: " << colors.magenta << pl->mana << colors.end << "\t\t\t\t\t\t\t\t\t\t\t\tEnemy intent: " << colors.magenta << enemy_intention_to_string(pl, en) << colors.end << "\n";
     cout << string(111, '-') << "\n";
     string mydesc;
     int cnt = 0; // Count number of cards so that message buffer is always at the same height
