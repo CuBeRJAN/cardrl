@@ -58,9 +58,6 @@ void end_game() {
     exit(0);
 }
 
-void discard_from_hand(pile* pl_cards, int index);
-void exhaust_from_hand(pile* pl_cards, int index);
-
 void buffer_send(string tosend) {
     cout << tosend;
 }
