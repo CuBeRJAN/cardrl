@@ -1,4 +1,5 @@
 ﻿#include<iostream>
+#include<sstream>
 #include<time.h>
 #include<chrono>
 #include<algorithm>
@@ -8,6 +9,9 @@
 #include<cstdlib>
 #include<string.h>
 #include<vector>
+#include<fstream>
+#include "cpptree.h" // https://github.com/CuBeRJAN/cpptree
+                     // it's not stealing if it's my own library
 
 #define EFFECT_LENGTH 100
 
@@ -1000,6 +1004,106 @@ player create_player() {
     return pl;
 }
 
+// Split a string into a vector of strings by char split
+vector<string> split_string(string data, char split) {
+    vector<string> v;
+    string tmp;
+    std::stringstream ss(data);
+    while(getline(ss, tmp, split)){
+        v.push_back(tmp);
+    }
+    return v;
+}
+
+
+bool isNumber(const string& str)
+{
+    for (char const &c : str) {
+        if (std::isdigit(c) == 0 && c != '-') return false;
+    }
+    return true;
+}
+
+// same thing but get integer vector returned
+vector<int> split_string_get_int(string data, char split) {
+    vector<int> v;
+    string tmp;
+    std::stringstream ss(data);
+    while(getline(ss, tmp, split)){
+        if (isNumber(tmp))
+            v.push_back(stoi(tmp));
+        else cout << "notnum" << tmp;
+    }
+    return v;
+}
+
+int count_lines_in_file(string filename) {
+    int nl = 0;
+    std::string line;
+    std::ifstream file(filename);
+    while (std::getline(file, line))
+        ++nl;
+    return nl;
+}
+
+vector_tree<string> read_tree_from_file(string filename, int offset){
+	std::ifstream file;
+	file.open(filename);
+	string line;
+
+    for (int i = 0; i < offset; i++) getline(file, line);
+
+    vector<int> relations;
+    vector<string> names;
+
+	getline(file, line);
+    relations = split_string_get_int(line, '^');
+	getline(file, line);
+    names = split_string(line, '^');
+
+    vector_tree<string> ret;
+    ret.setVectors(relations, names);
+	file.close();
+    return ret;
+}
+
+int get_random_in_range(int min, int max) {
+    return min + (rand() % max);
+}
+
+vector_tree<string> get_random_encounter_tree() {
+    string fi = "./encounters";
+    int lines = count_lines_in_file(fi);
+    int halflines = lines/2;
+    int r = get_random_in_range(0,halflines-1);
+    vector_tree<string> enc = read_tree_from_file(fi, (r*2));
+    return enc;
+}
+
+void eval_encounter(player* pl, pile* plc, vector_tree<string>* enc) {
+    int pos = 0;
+    bool isEven = true;
+    vector<int> nodes;
+    while (enc->getName(pos).at(0) != '_') {
+        if (enc->getChildren(pos).size() > 0)
+            nodes = enc->getChildren(pos);
+        if (isEven) {
+            cout << enc->getName(nodes.at(0)) << "\n\n";
+        }
+        else {
+            for (int i = 0; i < nodes.size(); i++) {
+                cout << "(" << i+1 << ") " << enc->getName(nodes.at(i)) << "\n";
+            }
+            cin.ignore();
+        }
+        isEven = !isEven;
+    }
+}
+
+void random_encounter(player* pl, pile* plc) {
+    vector_tree<string> enc = get_random_encounter_tree();
+    eval_encounter(pl, plc, &enc);
+}
 
 // TODO: get card after battle
 //       get special card after elite
@@ -1016,6 +1120,7 @@ int main() {
 
     while (pl.act != 2) {
         while (pl.level != 10) {
+            random_encounter(&pl, &pl_pile);
             create_fight(&pl, &pl_pile, &en_main);
             getchar();
             getchar();
