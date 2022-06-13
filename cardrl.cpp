@@ -21,6 +21,10 @@
                      // but it's not possible to declare a template class otherwise
                      // https://isocpp.org/wiki/faq/templates#templates-defn-vs-decl
 #include "cardrl.h"
+#include "card.h"
+#include "pile.h"
+#include "player.h"
+#include "enemy.h"
 
 
 // global variables
