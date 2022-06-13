@@ -328,6 +328,10 @@ public:
         return (dmg + (dmg * (0.2 * strength)));
     }
 
+    int mult_dmg_to(int dmg) {
+        if (vulnerable) return dmg * 1.5;
+        return dmg;
+    }
 
     void addblock(int blc) {
         if (!frail)
@@ -403,6 +407,11 @@ public:
     int mult_dmg_from(int dmg) {
         if (weak) return (dmg + (dmg * (0.2 * strength))) * 0.6;
         return (dmg + (dmg * (0.2 * strength)));
+    }
+
+    int mult_dmg_to(int dmg) {
+        if (vulnerable) return dmg * 1.5;
+        return dmg;
     }
 
     void clear_block() {
@@ -702,10 +711,71 @@ void discard_hand(player* pl, pile* pl_cards) {
     }
 }
 
+// Check if element is present in vector
+bool is_in_vector(vector<int> vec, int c) {
+    bool found = false;
+    for (int i = 0; i < vec.size(); i++) {
+        if (vec.at(i) == c) {
+            found = true;
+            break;
+        }
+    }
+    return found;
+}
+
+// get indexes of matching substrings
+vector<int> get_substring_index(string data, string sub) {
+    bool f;
+    vector<int> ret;
+    for (int i = 0; i < data.size() - sub.size(); i++) {
+        f = true;
+        for (int j = 0; j < sub.size(); j++) {
+            if (data.at(i + j) != sub.at(j)) f = false;
+        }
+        if (f)
+            ret.push_back(i);
+    }
+    return ret;
+}
+
+// Get card description
+string get_card_desc(player* pl, enemy* en, card cr) {
+    vector<int> vecdmg;
+    vector<int> vecblc;
+    string desc = cr.desc;
+    vecdmg = get_substring_index(cr.desc, "_d_");
+    vecblc = get_substring_index(cr.desc, "_b_");
+    vector<int> vec = vecdmg;
+    vec.insert(vec.begin(), vecblc.begin(), vecblc.end());
+    std::sort(vec.begin(), vec.end());
+    for (int i = vec.size()-1; i >= 0; i--) {
+        if (is_in_vector(vecdmg, vec.at(i))) {
+            desc.insert(vec.at(i), std::to_string(en->mult_dmg_to(pl->mult_dmg_from(cr.values.at(i))))); // Multiply damage
+        }
+        if (is_in_vector(vecblc, vec.at(i))) {
+            desc.insert(vec.at(i), std::to_string(pl->mult_block(cr.values.at(i)))); // Multiply block
+        }
+    }
+    for (int i = 0; i < vec.size(); i++) {
+        for (int j = 0; j < 3; j++) {
+            if (!isdigit(desc.at(vec.at(i)+1)))
+                desc.erase(desc.begin() + vec.at(i)+1, desc.begin() + vec.at(i)+2);
+        }
+    }
+    return desc;
+}
+
 // Prints the entire game screen
 // This function is really ugly
 void print_game(player* pl, pile* pl_cards, enemy* en) {
     cls();
+    vector<card> tmpdraw = pl_cards->draw;
+    vector<int> vdmg;
+    vector<int> vblc;
+    vector<string> draw_descs;
+    for (int i = 0; i < pl_cards->hand.size(); i++) {
+         draw_descs.push_back(get_card_desc(pl, en, pl_cards->hand.at(i)));
+    }
     cout << colors.green << "Act: " << pl->act + 1 << "/3" << "\t\t\t" << "Level: " << pl->level + 1 << colors.red
         << "\t\t\tDeck: " << pl_cards->deck.size() << " cards";
     cout << colors.yellow << "\t\t\tGold: " << pl->gold << colors.end << "\n";
@@ -721,7 +791,7 @@ void print_game(player* pl, pile* pl_cards, enemy* en) {
     int cnt = 0; // Count number of cards so that message buffer is always at the same height
     for (unsigned long int i = 0; i < pl_cards->hand.size(); i++) {
         cnt++;
-        mydesc = pl_cards->hand.at(i).desc;
+        mydesc = draw_descs.at(i);
         while (mydesc.length() < 60) mydesc += " ";
         cout << pl_cards->hand.at(i).color << "(" << i + 1 << ") " << pl_cards->hand.at(i).name << colors.end << "\t\t\t:: "
             << mydesc << colors.magenta
@@ -759,20 +829,6 @@ void discard_from_hand(pile* pl_cards, int index) {
 // same thing but exhaust
 void exhaust_from_hand(pile* pl_cards, int index) {
     pl_cards->hand.erase(pl_cards->hand.begin() + index);
-}
-
-vector<int> get_substring_index(string data, string sub) {
-    bool f;
-    vector<int> ret;
-    for (int i = 0; i < data.size() - sub.size(); i++) {
-        f = true;
-        for (int j = 0; j < data.size(); j++) {
-            if (data.at(i + j) != sub.at(j)) f = false;
-        }
-        if (f)
-            ret.push_back(i);
-    }
-    return ret;
 }
 
 // last char is return value ([D]iscard, [E]xhaust, [R]eturn to hand) -- NOT IN THIS FUNC ANYMORE
