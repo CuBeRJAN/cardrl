@@ -594,28 +594,28 @@ void eval_effect(char effect[EFFECT_LENGTH], player* plr, enemy* en, pile* pl_pi
         if (effect[i] == '\0') break;
 
         if (isdigit(effect[i])) tmpnum += (effect[i] - '0');
-        // Here we check the conditions (in a very ugly way)
-        else if (effect[i + 1] == '\0' || (isdigit(effect[i - 1]) && (
-            (effect[i + 1] == 'a') || // "always" condition i.e. no condition
-            (effect[i + 1] == 'w' && en->weak) || // check for enemy weaken condition
-            (effect[i + 1] == 'W' && plr->weak)
+        // Here we check the conditions
+        else if (effect[i + 1] == '\0' || (isdigit(effect[i - 1]) && ( // Implement conditions here (yes, it's ugly)
+                                                                       (effect[i + 1] == 'a') || // "always" condition i.e. no condition
+                                                                       (effect[i + 1] == 'w' && en->weak) || // check for enemy weaken condition
+                                                                       (effect[i + 1] == 'W' && plr->weak)
             ))) {
             switch (effect[i]) {
                 case 'd':
                     en->take_damage(plr->mult_dmg_from(tmpnum));
-                    buffer_queue(colors.red + "You hit for " + std::to_string(plr->mult_dmg_from(tmpnum)) + " damage" + colors.end); tmpnum = 0;
+                    buffer_queue(colors.red + "You hit for " + std::to_string(en->mult_dmg_to(plr->mult_dmg_from(tmpnum))) + " damage" + colors.end); tmpnum = 0;
                     break;
                 case 'D':
                     plr->take_damage(en->mult_dmg_from(tmpnum));
-                    buffer_queue(colors.red + "You take " + std::to_string(en->mult_dmg_from(tmpnum)) + " damage" + colors.end); tmpnum = 0;
+                    buffer_queue(colors.red + "You take " + std::to_string(plr->mult_dmg_to(en->mult_dmg_from(tmpnum))) + " damage" + colors.end); tmpnum = 0;
                     break;
                 case 'b':
                     plr->addblock(tmpnum);
-                    buffer_queue(colors.cyan + "You gain " + std::to_string(tmpnum) + " block" + colors.end); tmpnum = 0;
+                    buffer_queue(colors.cyan + "You gain " + std::to_string(plr->mult_block(tmpnum)) + " block" + colors.end); tmpnum = 0;
                     break;
                 case 'B':
                     en->addblock(tmpnum);
-                    buffer_queue(colors.cyan + "Enemy gains " + std::to_string(tmpnum) + " block" + colors.end); tmpnum = 0;
+                    buffer_queue(colors.cyan + "Enemy gains " + std::to_string(en->mult_block(tmpnum)) + " block" + colors.end); tmpnum = 0;
                     break;
                 case 's':
                     plr->strength += tmpnum;
