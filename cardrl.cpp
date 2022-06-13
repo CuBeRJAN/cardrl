@@ -750,16 +750,16 @@ string get_card_desc(player* pl, enemy* en, card cr) {
     std::sort(vec.begin(), vec.end());
     for (int i = vec.size()-1; i >= 0; i--) {
         if (is_in_vector(vecdmg, vec.at(i))) {
-            desc.insert(vec.at(i), std::to_string(en->mult_dmg_to(pl->mult_dmg_from(cr.values.at(i))))); // Multiply damage
+            desc.insert(vec.at(i)+3, std::to_string(en->mult_dmg_to(pl->mult_dmg_from(cr.values.at(i))))); // Multiply damage
         }
         if (is_in_vector(vecblc, vec.at(i))) {
-            desc.insert(vec.at(i), std::to_string(pl->mult_block(cr.values.at(i)))); // Multiply block
+            desc.insert(vec.at(i)+3, std::to_string(pl->mult_block(cr.values.at(i)))); // Multiply block
         }
     }
     for (int i = 0; i < vec.size(); i++) {
         for (int j = 0; j < 3; j++) {
-            if (!isdigit(desc.at(vec.at(i)+1)))
-                desc.erase(desc.begin() + vec.at(i)+1, desc.begin() + vec.at(i)+2);
+            if (!isdigit(desc.at(vec.at(i))))
+                desc.erase(desc.begin() + vec.at(i), desc.begin() + vec.at(i)+1);
         }
     }
     return desc;
@@ -773,7 +773,7 @@ void print_game(player* pl, pile* pl_cards, enemy* en) {
     vector<int> vdmg;
     vector<int> vblc;
     vector<string> draw_descs;
-    for (int i = 0; i < pl_cards->hand.size(); i++) {
+    for (long unsigned int i = 0; i < pl_cards->hand.size(); i++) {
          draw_descs.push_back(get_card_desc(pl, en, pl_cards->hand.at(i)));
     }
     cout << colors.green << "Act: " << pl->act + 1 << "/3" << "\t\t\t" << "Level: " << pl->level + 1 << colors.red
@@ -873,7 +873,6 @@ void create_fight(player* pl, pile* plc, enemy* en_main) {
         en_main->commit_intention(pl, plc);
         choice = '0';
     }
-
 }
 
 // TODO: * read from some kind of proper database
