@@ -641,6 +641,20 @@ void eval_effect(char effect[EFFECT_LENGTH], player* plr, enemy* en, pile* pl_pi
                     plr->strength -= tmpnum;
                     buffer_queue(colors.red + "You lose " + std::to_string(tmpnum + 1) + " strength" + colors.end); tmpnum = 0;
                     break;
+                case 'p':
+                    en->poison += tmpnum;
+                    buffer_queue(colors.green + std::to_string(tmpnum + 1) + " poison has been applied to enemy" + colors.end); tmpnum = 0;
+                    break;
+                case 'h':
+                    plr->hp += tmpnum;
+                    if (plr->hp > plr->maxhp) plr->hp = plr->maxhp; // HP cap
+                    buffer_queue(colors.green + "You heal " + std::to_string(tmpnum + 1) + " health" + colors.end); tmpnum = 0;
+                    break;
+                case 'H':
+                    en->hp += tmpnum;
+                    if (en->hp > en->maxhp) en->hp = en->maxhp; // HP cap
+                    buffer_queue(colors.green + "Enemy heals " + std::to_string(tmpnum + 1) + " health" + colors.end); tmpnum = 0;
+                    break;
                 case 'm':
                     plr->mana += 1; // mana is allowed over maxmana counter
                     tmpnum = 0;
