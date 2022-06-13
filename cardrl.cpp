@@ -1032,7 +1032,6 @@ vector<int> split_string_get_int(string data, char split) {
     while(getline(ss, tmp, split)){
         if (isNumber(tmp))
             v.push_back(stoi(tmp));
-        else cout << "notnum" << tmp;
     }
     return v;
 }
@@ -1084,19 +1083,33 @@ void eval_encounter(player* pl, pile* plc, vector_tree<string>* enc) {
     int pos = 0;
     bool isEven = true;
     vector<int> nodes;
-    while (enc->getName(pos).at(0) != '_') {
-        if (enc->getChildren(pos).size() > 0)
-            nodes = enc->getChildren(pos);
-        if (isEven) {
-            cout << enc->getName(nodes.at(0)) << "\n\n";
+    char choice;
+    string ef;
+    int c;
+    cin.ignore();
+    while (true) {
+        if (enc->getChildren(pos).size()) {
+            if (enc->getName(enc->getChildren(pos).at(0)).at(0) == '_')
+                break;
+            else {
+                if (isEven) {
+                    cout << enc->getName(pos) << "\n\n";
+                }
+                else {
+                    nodes = enc->getChildren(pos);
+                    for (int i = 0; i < nodes.size(); i++) {
+                        cout << "(" << i+1 << ") " << enc->getName(nodes.at(i)) << "\n";
+                    }
+                    choice = key_press();
+                    c = choice - '0' - 1;
+                    pos = nodes.at(c);
+                }
+                isEven = !isEven;
+            }
         }
         else {
-            for (int i = 0; i < nodes.size(); i++) {
-                cout << "(" << i+1 << ") " << enc->getName(nodes.at(i)) << "\n";
-            }
-            cin.ignore();
+            break;
         }
-        isEven = !isEven;
     }
 }
 
