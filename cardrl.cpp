@@ -1074,7 +1074,7 @@ vector_tree<string> get_random_encounter_tree() {
     string fi = "./encounters";
     int lines = count_lines_in_file(fi);
     int halflines = lines/2;
-    int r = get_random_in_range(0,halflines-1);
+    int r = get_random_in_range(0,halflines);
     vector_tree<string> enc = read_tree_from_file(fi, (r*2));
     return enc;
 }
@@ -1112,11 +1112,17 @@ void eval_encounter(player* pl, pile* plc, vector_tree<string>* enc) {
             }
         }
     }
-    char e[EFFECT_LENGTH];
-    strcpy(e, ef.c_str());
-    eval_effect(e, pl, &en ,plc);
+    if (ef != "") {
+        char e[EFFECT_LENGTH];
+        strcpy(e, ef.c_str());
+        eval_effect(e, pl, &en ,plc);
+    }
 }
 
+// Each encounter is a tree of interactions, ending with some effect (or no effect at all), marked by a '_'
+// The encounters are taken from the database
+// Theres an interface for adding new encounters, 'make_encounter.cpp', once an encounter is prepared you can append to the end
+// of database with 'q' on the keyboard
 void random_encounter(player* pl, pile* plc) {
     vector_tree<string> enc = get_random_encounter_tree();
     eval_encounter(pl, plc, &enc);
@@ -1137,7 +1143,7 @@ int main() {
 
     while (pl.act != 2) {
         while (pl.level != 10) {
-            random_encounter(&pl, &pl_pile);
+            // random_encounter(&pl, &pl_pile); // Run a random encounter
             create_fight(&pl, &pl_pile, &en_main);
             getchar();
             getchar();
