@@ -1121,7 +1121,7 @@ void eval_encounter(player* pl, pile* plc, vector_tree<string>* enc) {
                     }
                     choice = key_press();
                     c = choice - '0' - 1;
-                    pos = nodes.at(c);
+                    pos = nodes.at(nodes.at(c));
                 }
                 isEven = !isEven;
             }
