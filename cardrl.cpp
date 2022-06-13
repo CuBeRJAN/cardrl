@@ -577,7 +577,7 @@ void check_bufferlen() {
 // d = dmg
 // p = pois
 // b = block
-// 92d3b3p means 11 damage, 3 block and 3 poison
+// 92da3bw3p means 11 damage, 3 block if enemy is weak, and 3 poison
 // [b]lock, [d]amage enemy, dis[c]ard other cards, [p]oison
 // [h]eal, e[x]haust other card(s), [H]eal enemy, [D]amage player
 // [B]lock enemy, add [s]trength, add [S]trength to enemy
