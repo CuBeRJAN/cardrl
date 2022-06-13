@@ -13,35 +13,29 @@
 #include<string.h>
 #include<vector>
 #include<fstream>
+#include<iterator>
 #include "cpptree.h" // https://github.com/CuBeRJAN/cpptree
                      // it's not stealing if it's my own library
                      //
                      // I know full definitions shouldn't be in headers,
                      // but it's not possible to declare a template class otherwise
                      // https://isocpp.org/wiki/faq/templates#templates-defn-vs-decl
-
-// TODO: Proper header file
-
-#define EFFECT_LENGTH 100 // max length of effect
-#define ENCOUNTERS_PATH "./encounters" // define where the random encounter database is stored
+#include "cardrl.h"
 
 
-// This game is a Slay the Spire ripoff
+// global variables
+// defining in header cause issues for some reason
+std::vector<card> cards; // global variable, all the cards in the game
+std::vector<enemy> enemies; // all enemies in the game
+// randomness seed
+unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+std::default_random_engine shuffle_myseed(seed);
+std::string msgbuffer;
+
+
 
 using std::cout;    using std::cin;
 using std::string;  using std::vector;
-
-#include  <iterator>
-
-struct {
-    const string cyan = "\033[36m";
-    const string magenta = "\033[35m";
-    const string red = "\033[91m";
-    const string gray = "\033[8m";
-    const string green = "\033[92m";
-    const string yellow = "\033[33m";
-    const string end = "\033[0m";
-} colors;
 
 // randomization code here is copied from stackoverflow
 template<typename Iter, typename RandomGenerator>
@@ -58,469 +52,11 @@ Iter select_randomly(Iter start, Iter end) {
     return select_randomly(start, end, gen);
 }
 
-
-// the key_press() function is copied code too
-#if defined(_WIN32)
-#define WIN32_LEAN_AND_MEAN
-#define VC_EXTRALEAN
-#include <Windows.h>
-void cls() {
-    system("cls");
-}
-void game_quit() {
-    cout << "Game over!\n";
-    char x;
-    cin >> x;
-    exit(0);
-}
-int key_press() { // not working: F11 (-122, toggles fullscreen)
-    KEY_EVENT_RECORD keyevent;
-    INPUT_RECORD irec;
-    DWORD events;
-    while (true) {
-        ReadConsoleInput(GetStdHandle(STD_INPUT_HANDLE), &irec, 1, &events);
-        if (irec.EventType == KEY_EVENT && ((KEY_EVENT_RECORD&)irec.Event).bKeyDown) {
-            keyevent = (KEY_EVENT_RECORD&)irec.Event;
-            const int ca = (int)keyevent.uChar.AsciiChar;
-            const int cv = (int)keyevent.wVirtualKeyCode;
-            const int key = ca == 0 ? -cv : ca + (ca > 0 ? 0 : 256);
-            switch (key) {
-            case  -16: continue; // disable Shift
-            case  -17: continue; // disable Ctrl / AltGr
-            case  -18: continue; // disable Alt / AltGr
-            case -220: continue; // disable first detection of "^" key (not "^" symbol)
-            case -221: continue; // disable first detection of "`" key (not "`" symbol)
-            case -191: continue; // disable AltGr + "#"
-            case  -52: continue; // disable AltGr + "4"
-            case  -53: continue; // disable AltGr + "5"
-            case  -54: continue; // disable AltGr + "6"
-            case  -12: continue; // disable num block 5 with num lock deactivated
-            case   13: return  10; // enter
-            case  -46: return 127; // delete
-            case  -49: return 251; // ¹
-            case    0: continue;
-            case    1: continue; // disable Ctrl + a (selects all text)
-            case    2: continue; // disable Ctrl + b
-            case    3: continue; // disable Ctrl + c (terminates program)
-            case    4: continue; // disable Ctrl + d
-            case    5: continue; // disable Ctrl + e
-            case    6: continue; // disable Ctrl + f (opens search)
-            case    7: continue; // disable Ctrl + g
-            //case    8: continue; // disable Ctrl + h (ascii for backspace)
-            //case    9: continue; // disable Ctrl + i (ascii for tab)
-            case   10: continue; // disable Ctrl + j
-            case   11: continue; // disable Ctrl + k
-            case   12: continue; // disable Ctrl + l
-            //case   13: continue; // disable Ctrl + m (breaks console, ascii for new line)
-            case   14: continue; // disable Ctrl + n
-            case   15: continue; // disable Ctrl + o
-            case   16: continue; // disable Ctrl + p
-            case   17: continue; // disable Ctrl + q
-            case   18: continue; // disable Ctrl + r
-            case   19: continue; // disable Ctrl + s
-            case   20: continue; // disable Ctrl + t
-            case   21: continue; // disable Ctrl + u
-            case   22: continue; // disable Ctrl + v (inserts clipboard)
-            case   23: continue; // disable Ctrl + w
-            case   24: continue; // disable Ctrl + x
-            case   25: continue; // disable Ctrl + y
-            case   26: continue; // disable Ctrl + z
-            default: return key; // any other ASCII/virtual character
-            }
-        }
-    }
-}
-#elif defined(__linux__)
-#include <sys/ioctl.h>
-#include <termios.h>
-#include <unistd.h>
-void cls() {
-    system("clear");
-}
-void game_quit() {
-    struct termios term;
-    tcgetattr(0, &term);
-    term.c_lflag |= (ICANON | ECHO);
-    tcsetattr(0, TCSANOW, &term);
-    cout << "Game over!\n";
-    exit(0);
-}
-int key_press() { // not working: ¹ (251), num lock (-144), caps lock (-20), windows key (-91), kontext menu key (-93)
-    struct termios term;
-    tcgetattr(0, &term);
-    while (true) {
-        term.c_lflag &= ~(ICANON | ECHO); // turn off line buffering and echoing
-        tcsetattr(0, TCSANOW, &term);
-        int nbbytes;
-        ioctl(0, FIONREAD, &nbbytes); // 0 is STDIN
-        while (!nbbytes) {
-            sleep(0.01);
-            fflush(stdout);
-            ioctl(0, FIONREAD, &nbbytes); // 0 is STDIN
-        }
-        int key = (int)getchar();
-        if (key == 27 || key == 194 || key == 195) { // escape, 194/195 is escape for °ß´äöüÄÖÜ
-            key = (int)getchar();
-            if (key == 91) { // [ following escape
-                key = (int)getchar(); // get code of next char after \e[
-                if (key == 49) { // F5-F8
-                    key = 62 + (int)getchar(); // 53, 55-57
-                    if (key == 115) key++; // F5 code is too low by 1
-                    getchar(); // take in following ~ (126), but discard code
-                }
-                else if (key == 50) { // insert or F9-F12
-                    key = (int)getchar();
-                    if (key == 126) { // insert
-                        key = 45;
-                    }
-                    else { // F9-F12
-                        key += 71; // 48, 49, 51, 52
-                        if (key < 121) key++; // F11 and F12 are too low by 1
-                        getchar(); // take in following ~ (126), but discard code
-                    }
-                }
-                else if (key == 51 || key == 53 || key == 54) { // delete, page up/down
-                    getchar(); // take in following ~ (126), but discard code
-                }
-            }
-            else if (key == 79) { // F1-F4
-                key = 32 + (int)getchar(); // 80-83
-            }
-            key = -key; // use negative numbers for escaped keys
-        }
-        term.c_lflag |= (ICANON | ECHO); // turn on line buffering and echoing
-        tcsetattr(0, TCSANOW, &term);
-        switch (key) {
-        case  127: return   8; // backspace
-        case  -27: return  27; // escape
-        case  -51: return 127; // delete
-        case -164: return 132; // ä
-        case -182: return 148; // ö
-        case -188: return 129; // ü
-        case -132: return 142; // Ä
-        case -150: return 153; // Ö
-        case -156: return 154; // Ü
-        case -159: return 225; // ß
-        case -181: return 230; // µ
-        case -167: return 245; // §
-        case -176: return 248; // °
-        case -178: return 253; // ²
-        case -179: return 252; // ³
-        case -180: return 239; // ´
-        case  -65: return -38; // up arrow
-        case  -66: return -40; // down arrow
-        case  -68: return -37; // left arrow
-        case  -67: return -39; // right arrow
-        case  -53: return -33; // page up
-        case  -54: return -34; // page down
-        case  -72: return -36; // pos1
-        case  -70: return -35; // end
-        case    0: continue;
-        case    1: continue; // disable Ctrl + a
-        case    2: continue; // disable Ctrl + b
-        case    3: continue; // disable Ctrl + c (terminates program)
-        case    4: continue; // disable Ctrl + d
-        case    5: continue; // disable Ctrl + e
-        case    6: continue; // disable Ctrl + f
-        case    7: continue; // disable Ctrl + g
-        case    8: continue; // disable Ctrl + h
-        //case    9: continue; // disable Ctrl + i (ascii for tab)
-        //case   10: continue; // disable Ctrl + j (ascii for new line)
-        case   11: continue; // disable Ctrl + k
-        case   12: continue; // disable Ctrl + l
-        case   13: continue; // disable Ctrl + m
-        case   14: continue; // disable Ctrl + n
-        case   15: continue; // disable Ctrl + o
-        case   16: continue; // disable Ctrl + p
-        case   17: continue; // disable Ctrl + q
-        case   18: continue; // disable Ctrl + r
-        case   19: continue; // disable Ctrl + s
-        case   20: continue; // disable Ctrl + t
-        case   21: continue; // disable Ctrl + u
-        case   22: continue; // disable Ctrl + v
-        case   23: continue; // disable Ctrl + w
-        case   24: continue; // disable Ctrl + x
-        case   25: continue; // disable Ctrl + y
-        case   26: continue; // disable Ctrl + z (terminates program)
-        default: return key; // any other ASCII character
-        }
-    }
-}
-#endif // Windows/Linux
-
-
 void end_game() {
     cls();
     cout << "You lost!\n";
     exit(0);
 }
-
-class card {
-public:
-    card(string n, string d, vector<int> vec, string ef, int c, int r, string cl, int tp) {
-        name = n;
-        type = tp;
-        color = cl;
-        rarity = r;
-        desc = d;
-        cost = c;
-        values = vec;
-        strcpy(effect, ef.c_str());
-    }
-
-    vector<int> values;
-    int rarity; // 0 common, 1 uncommon, 2 rare, 3 very rare, 4 - upgraded cards
-    int type; // 0 attack, 1 skill
-    int cost;
-    string color;
-    string name;
-    string desc;
-    char effect[EFFECT_LENGTH];
-};
-
-// Player card piles
-class pile {
-public:
-    vector<card> hand;
-    vector<card> discard;
-    vector<card> deck;
-    vector<card> draw;
-};
-
-class player;
-void discard_hand(player*, pile*);
-void draw_hand(player*, pile*);
-void check_bufferlen();
-
-class player { // TODO: There surely is a cleaner way than having 20000 variables for status effects
-public:
-    string name;
-    int vulnerable = 0;
-    int drawcards = 4;
-    int nlevel = 0; // level of enemies (not of descent!)
-    int drawlimit = 10; // how many cards can be in hand at once
-    int barricade = 0; // don't lose block for x turns
-    int gold = 0;
-    int level = 0; // each act has a number of levels, stored here
-    int dont_discard_hand = 0; // don't discard hand for x turns
-    int dont_draw = 0;
-    int act = 0; // game is split into 3 acts, this stores the act number
-    int poison = 0;
-    int frail = 0; // weaken block cards
-    int maxmana = 2;
-    int mana;
-    int weak = 0; // -1 weak each turn
-    int hp = 25;
-    int maxhp = 25;
-    int block = 0;
-    int strength = 0;
-    bool confused = false; // confusion effect
-
-    void begin_turn(pile* pl_cards) {
-        pl_discard_hand(pl_cards);
-        if (!dont_draw)
-            draw_hand(this, pl_cards); // draw new cards
-        hp -= poison; // apply poison
-        if (hp < 1) end_game(); // end game if hp <= 0
-        mana = maxmana; // refresh mana
-    }
-
-    void take_damage(int dmg) {
-        int rdmg = dmg;
-        if (vulnerable) rdmg *= 1.5;
-        int obl = block;
-        if (rdmg >= block) {
-            block = 0;
-            hp -= rdmg - obl;
-        }
-        else
-            block -= rdmg;
-    }
-
-
-    // piercing damage / poison
-    void take_damage_forced(int dmg) {
-        int rdmg = dmg;
-        if (vulnerable) rdmg *= 1.5;
-        hp -= rdmg;
-    }
-
-    // multiply outgoing damage
-    int mult_dmg_from(int dmg) {
-        if (weak) return (dmg + (dmg * (0.2 * strength))) * 0.6;
-        return (dmg + (dmg * (0.2 * strength))); // maybe change this calculation somehow, strength is way too impactful
-    }
-
-    int mult_dmg_to(int dmg) {
-        if (vulnerable) return dmg * 1.5;
-        return dmg;
-    }
-
-    void addblock(int blc) {
-        if (!frail)
-            block += blc;
-        else
-            block += blc * 0.7;
-    }
-
-    void remove_mana(int n) {
-        mana -= n;
-    }
-
-    void clear_block() {
-        if (!barricade) block = 0;
-    }
-
-    int mult_block(int blc) {
-        if (frail)
-            blc *= 0.7;
-        return blc;
-    }
-
-    void decrease_counters() {
-        if (poison)
-            take_damage_forced(poison);
-        clear_block();
-        if (poison) poison--;
-        if (vulnerable) vulnerable--;
-        if (barricade) barricade--;
-        if (weak) weak--;
-        if (dont_discard_hand) dont_discard_hand--;
-        if (dont_draw) dont_draw--;
-    }
-
-    void pl_discard_hand(pile* plc) {
-        if (!dont_discard_hand)
-            discard_hand(this, plc);
-    }
-};
-
-void shuffle_stringvec(vector<string>*);
-
-class enemy;
-void eval_effect(char effect[EFFECT_LENGTH], player* plr, enemy* enemy, pile* pl_pile);
-class enemy {
-public:
-    string name;
-    int poison = 0;
-    int maxmana = 4; // Enemies have mana, may be useful some time
-    int mana;
-    int hp;
-    int maxhp;
-    int vulnerable = 0;
-    int barricade = 0; // don't discard block for x turns
-    int weak = 0;
-    int block = 0;
-    int strength = 0;
-    int level;
-    int frail = 0; // Lower block effectiveness
-    string intention;
-    vector<string> actions;
-    int intention_counter_max;
-    int intention_counter = 0;
-
-    enemy(string n, int mhp, int l, vector<string> ac) {
-        name = n;
-        maxhp = mhp;
-        level = l;
-        actions = ac;
-        intention_counter_max = ac.size();
-        hp = maxhp;
-    }
-
-
-    int mult_dmg_from(int dmg) {
-        if (weak) return (dmg + (dmg * (0.2 * strength))) * 0.6;
-        return (dmg + (dmg * (0.2 * strength)));
-    }
-
-    int mult_dmg_to(int dmg) {
-        if (vulnerable) return dmg * 1.5;
-        return dmg;
-    }
-
-    void clear_block() {
-        if (!barricade) block = 0;
-    }
-
-    int mult_block(int blc) {
-        if (frail)
-            blc *= 0.7;
-        return blc;
-    }
-
-    void take_damage(int dmg) {
-        int rdmg = dmg;
-        if (vulnerable) rdmg *= 1.5;
-        int obl = block;
-        if (rdmg >= block) {
-            block = 0;
-            hp -= rdmg - obl;
-        }
-        else
-            block -= rdmg;
-    }
-
-    // piercing damage
-    void take_damage_forced(int dmg) {
-        int rdmg = dmg;
-        if (vulnerable) rdmg *= 1.5;
-        hp -= rdmg;
-    }
-
-    bool check_hp() {
-        if (hp < 1) {
-            return false;
-        }
-        return true;
-    }
-
-    void addblock(int blc) {
-        if (!frail)
-            block += blc;
-        else
-            block += blc * 0.7;
-    }
-
-    void remove_mana(int n) {
-        mana -= n;
-    }
-
-    string get_intention() {
-        if (intention_counter >= intention_counter_max - 1) {
-            shuffle_stringvec(&actions);
-            intention_counter = 0;
-        }
-        else {
-            intention_counter++;
-        }
-        intention = actions.at(intention_counter);
-        return intention;
-    }
-
-    void commit_intention(player* pl, pile* plc) {
-        char ef[EFFECT_LENGTH];
-        strcpy(ef, intention.c_str());
-        eval_effect(ef, pl, this, plc);
-    }
-
-    void begin_turn() {
-        if (barricade) barricade--;
-        if (poison)
-            take_damage_forced(poison);
-        else block = 0;
-    }
-
-    void decrease_counters() {
-        clear_block();
-        if (poison) poison--;
-        if (vulnerable) vulnerable--;
-        if (barricade) barricade--;
-        if (weak) weak--;
-    }
-
-};
-
 
 void discard_from_hand(pile* pl_cards, int index);
 void exhaust_from_hand(pile* pl_cards, int index);
@@ -529,7 +65,6 @@ void buffer_send(string tosend) {
     cout << tosend;
 }
 
-string msgbuffer; // global variable!!
 void buffer_queue(string q) {
     check_bufferlen();
     msgbuffer += q + "\n";
@@ -695,9 +230,6 @@ string int_to_efnum(int real) {
     return concat;
 }
 
-unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
-std::default_random_engine shuffle_myseed(seed);
-
 // shuffle deck
 void shuffle_deck(vector<card>* dc) {
     //unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
@@ -739,7 +271,7 @@ void draw_hand(player* pl, pile* pl_cards) {
 }
 
 // make intention into readable string
-string enemy_intention_to_string(player*pl, enemy* en) {
+string enemy_intention_to_string(player* pl, enemy* en) {
     string intend = en->intention;
     int tmpnum = 0;
     string ret = "";
@@ -962,8 +494,6 @@ void init_game(vector<enemy>* env, vector<card>* crds) {
     crds->push_back(card("Disarm", "Enemy loses 4 strength", {}, "4laD", 1, 1, colors.red, 0));
 }
 
-vector<card> cards; // another global variable...
-std::vector<enemy> enemies;
 void upgrade_card(pile* plc, int index) {
     for (long unsigned int i = 0; i < cards.size(); i++) {
         if (cards.at(i).name == plc->deck.at(index).name + "+")
