@@ -371,7 +371,7 @@ void print_game(player* pl, pile* pl_cards, enemy* en) {
     cout << colors.yellow << pl->name << " the ironclad\t\t\t\t\t\t\t\t\t\t" << en->name << colors.end << std::endl;
     cout << "Draw pile: " << colors.yellow << pl_cards->draw.size() << " cards\t\t\t\t\t\t\t\t\t\t" << colors.end << "Discard pile: "
         << colors.yellow << pl_cards->discard.size() << " cards\n" << colors.end;
-    cout << "HP: " << colors.green << pl->hp << "/" << pl->maxhp << colors.end << "\t\t\t\t\t\t\t\t\t\t\tEnemy HP: " << colors.green << en->hp << colors.end << "\n";
+    cout << "HP: " << colors.green << pl->hp << "/" << pl->maxhp << colors.end << "\t\t\t\t\t\t\t\t\t\t\tEnemy HP: " << colors.green << en->hp << "/" << en->maxhp << colors.end << "\n";
     cout << "Block: " << colors.cyan << pl->block << colors.end << "\t\t\t\t\t\t\t\t\t\t\tEnemy block: " << colors.cyan << en->block << colors.end << "\n";
     cout << "Mana: " << colors.magenta << pl->mana << colors.end << "\t\t\t\t\t\t\t\t\t\t\t\tEnemy intent: " << colors.magenta << enemy_intention_to_string(pl, en) << colors.end << "\n";
     cout << string(111, '-') << "\n";
