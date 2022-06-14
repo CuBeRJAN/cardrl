@@ -648,6 +648,7 @@ void eval_encounter(player* pl, pile* plc, vector_tree<string>* enc) {
     string ef;
     int c;
     cin.ignore();
+    int addpos = 0;
     while (true) {
         if (enc->getChildren(pos).size()) {
             if (enc->getName(enc->getChildren(pos).at(0)).at(0) == '_') {
@@ -657,6 +658,10 @@ void eval_encounter(player* pl, pile* plc, vector_tree<string>* enc) {
             }
             else {
                 if (isEven) {
+                    cout << "Act:" << pl->act+1 << "/3" << "\t\t\tLevel: " << pl->level+1 << "\n";
+                    cout << "HP: " << colors.green << pl->hp << "/" << pl->maxhp << colors.end;
+                    cout << "\t\tGold: " << colors.yellow << pl->gold << colors.end;
+                    cout << "\n\n";
                     cout << enc->getName(pos) << "\n\n";
                 }
                 else {
@@ -666,12 +671,18 @@ void eval_encounter(player* pl, pile* plc, vector_tree<string>* enc) {
                     }
                     choice = key_press();
                     c = choice - '0' - 1;
-                    pos = nodes.at(nodes.at(c));
+                    //pos = nodes.at(enc->getChildren(c).at(enc->getChildren(0).at(0)));
+                    pos = nodes.at(enc->getChildren(c).at(0));
+                    cout << pos;
+                    //addpos+=c;
                 }
                 isEven = !isEven;
             }
         }
     }
+    cout << "end";
+    //cout << enc->getName(enc->getChildren(pos).at(0));
+    cin.ignore();
     if (ef != "") {
         char e[EFFECT_LENGTH];
         strcpy(e, ef.c_str());
@@ -705,8 +716,11 @@ int main() {
 
     while (pl.act != 2) {
         while (pl.level != 10) {
-            // random_encounter(&pl, &pl_pile); // Run a random encounter
-            create_fight(&pl, &pl_pile, &en_main);
+            random_encounter(&pl, &pl_pile); // Run a random encounter
+            cout << "end";
+            cin.ignore();
+            cin.ignore();
+            //create_fight(&pl, &pl_pile, &en_main);
             getchar();
             getchar();
             en_main = pick_enemy(&pl);
