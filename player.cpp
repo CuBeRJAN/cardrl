@@ -2,7 +2,20 @@
 #include "enemy.h"
 #include "cardrl.h"
 
+
+void player::decrease_counters() {
+    if (poison)
+        take_damage_forced(poison);
+    clear_block();
+    if (poison) poison--;
+    if (vulnerable) vulnerable--;
+    if (barricade) barricade--;
+    if (dont_discard_hand) dont_discard_hand--;
+    if (dont_draw) dont_draw--;
+}
+
 void player::begin_turn(pile* pl_cards) {
+    decrease_counters();
     pl_discard_hand(pl_cards);
     if (!dont_draw)
         draw_hand(this, pl_cards); // draw new cards
@@ -37,6 +50,10 @@ int player::mult_dmg_from(int dmg) {
     return (dmg + (dmg * (0.2 * strength))); // maybe change this calculation somehow, strength is way too impactful
 }
 
+void player::end_turn() {
+    if (weak) weak--;
+}
+
 int player::mult_dmg_to(int dmg) {
     if (vulnerable) return dmg * 1.5;
     return dmg;
@@ -61,18 +78,6 @@ int player::mult_block(int blc) {
     if (frail)
         blc *= 0.7;
     return blc;
-}
-
-void player::decrease_counters() {
-    if (poison)
-        take_damage_forced(poison);
-    clear_block();
-    if (poison) poison--;
-    if (vulnerable) vulnerable--;
-    if (barricade) barricade--;
-    if (weak) weak--;
-    if (dont_discard_hand) dont_discard_hand--;
-    if (dont_draw) dont_draw--;
 }
 
 void player::pl_discard_hand(pile* plc) {

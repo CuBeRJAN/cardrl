@@ -16,6 +16,10 @@ int enemy::mult_dmg_from(int dmg) {
     return (dmg + (dmg * (0.2 * strength)));
 }
 
+void enemy::end_turn() {
+    if (weak) weak--;
+}
+
 int enemy::mult_dmg_to(int dmg) {
     if (vulnerable) return dmg * 1.5;
     return dmg;
@@ -98,5 +102,4 @@ void enemy::decrease_counters() {
     if (poison) poison--;
     if (vulnerable) vulnerable--;
     if (barricade) barricade--;
-    if (weak) weak--;
 }

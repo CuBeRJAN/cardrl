@@ -30,6 +30,7 @@ public:
     bool confused = false; // confusion effect
 
     void begin_turn(pile*);
+    void end_turn();
     void take_damage(int);
     void take_damage_forced(int); // piercing damage / poison
     int mult_dmg_from(int dmg); // multiply outgoing damage

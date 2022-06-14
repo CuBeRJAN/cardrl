@@ -51,6 +51,8 @@ public:
 
     void begin_turn();
 
+    void end_turn();
+
     void decrease_counters();
 
 };

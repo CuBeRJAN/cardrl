@@ -441,9 +441,8 @@ void create_fight(player* pl, pile* plc, enemy* en_main) {
     bool fight = true;
     char choice = '0';
     while (fight) {
-        start_turn(pl, plc);
         en_main->get_intention();
-        pl->decrease_counters();
+        pl->begin_turn(plc);
         print_game(pl, plc, en_main);
         while (choice != 'q') {
             choice = key_press();
@@ -456,9 +455,10 @@ void create_fight(player* pl, pile* plc, enemy* en_main) {
             }
             print_game(pl, plc, en_main);
         }
-        en_main->decrease_counters();
+        pl->end_turn();
         en_main->begin_turn();
         en_main->commit_intention(pl, plc);
+        en_main->end_turn();
         choice = '0';
     }
 }
