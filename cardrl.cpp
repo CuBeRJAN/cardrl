@@ -443,7 +443,6 @@ void create_fight(player* pl, pile* plc, enemy* en_main) {
     while (fight) {
         start_turn(pl, plc);
         en_main->get_intention();
-        en_main->decrease_counters();
         pl->decrease_counters();
         print_game(pl, plc, en_main);
         while (choice != 'q') {
@@ -457,6 +456,7 @@ void create_fight(player* pl, pile* plc, enemy* en_main) {
             }
             print_game(pl, plc, en_main);
         }
+        en_main->decrease_counters();
         en_main->begin_turn();
         en_main->commit_intention(pl, plc);
         choice = '0';
