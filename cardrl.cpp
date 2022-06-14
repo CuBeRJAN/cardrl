@@ -658,6 +658,7 @@ void eval_encounter(player* pl, pile* plc, vector_tree<string>* enc) {
             }
             else {
                 if (isEven) {
+                    cls();
                     cout << "Act:" << pl->act+1 << "/3" << "\t\t\tLevel: " << pl->level+1 << "\n";
                     cout << "HP: " << colors.green << pl->hp << "/" << pl->maxhp << colors.end;
                     cout << "\t\tGold: " << colors.yellow << pl->gold << colors.end;
@@ -671,18 +672,14 @@ void eval_encounter(player* pl, pile* plc, vector_tree<string>* enc) {
                     }
                     choice = key_press();
                     c = choice - '0' - 1;
-                    //pos = nodes.at(enc->getChildren(c).at(enc->getChildren(0).at(0)));
-                    pos = enc->getChildren(enc->getChildren(pos).at(c))).at(0);
-                    cout << pos;
-                    //addpos+=c;
+                    pos = enc->getChildren(enc->getChildren(pos).at(c)).at(0);
                 }
                 isEven = !isEven;
             }
         }
     }
-    cout << "end";
-    //cout << enc->getName(enc->getChildren(pos).at(0));
-    cin.ignore();
+    cls();
+    cout << enc->getName(pos) << "\n";
     if (ef != "") {
         char e[EFFECT_LENGTH];
         strcpy(e, ef.c_str());
@@ -717,12 +714,8 @@ int main() {
     while (pl.act != 2) {
         while (pl.level != 10) {
             random_encounter(&pl, &pl_pile); // Run a random encounter
-            cout << "end";
             cin.ignore();
-            cin.ignore();
-            //create_fight(&pl, &pl_pile, &en_main);
-            getchar();
-            getchar();
+            create_fight(&pl, &pl_pile, &en_main);
             en_main = pick_enemy(&pl);
             pl.level++;
             if (pl.level == 2 || pl.level == 6)
