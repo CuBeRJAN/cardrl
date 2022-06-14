@@ -672,7 +672,7 @@ void eval_encounter(player* pl, pile* plc, vector_tree<string>* enc) {
                     choice = key_press();
                     c = choice - '0' - 1;
                     //pos = nodes.at(enc->getChildren(c).at(enc->getChildren(0).at(0)));
-                    pos = nodes.at(enc->getChildren(c).at(0));
+                    pos = enc->getChildren(enc->getChildren(pos).at(c))).at(0);
                     cout << pos;
                     //addpos+=c;
                 }
