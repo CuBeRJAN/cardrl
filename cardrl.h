@@ -85,6 +85,7 @@ void shuffle_deck(std::vector<card>*);
 void shuffle_stringvec(std::vector<std::string>*);
 
 void start_fight(player*, pile*); // initialize stuff at the beginning of a fight
+void draw_one_card(player*, pile*); // draw a single card
 void draw_hand(player*, pile*); // draw a full hand of cards
 
 // make enemy intent into readable string

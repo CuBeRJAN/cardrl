@@ -11,7 +11,7 @@ public:
     int vulnerable = 0;
     int drawcards = 4;
     int nlevel = 0; // level of enemies (not of descent!)
-    int drawlimit = 10; // how many cards can be in hand at once
+    int drawlimit = 9; // how many cards can be in hand at once
     int barricade = 0; // don't lose block for x turns
     int gold = 0;
     int level = 0; // each act has a number of levels, stored here

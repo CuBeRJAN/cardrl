@@ -119,10 +119,11 @@ void check_bufferlen() {
 // [B]lock enemy, add [s]trength, add [S]trength to enemy
 // [w]eaken player, [W]eaken enemy, gain [m]ana
 // draw a [C]ard, enemy [l]ose str, player [L]ose str
+// [f]orce player take damage (not affected by vulnerable or block)
 
 // there are 2 letters at the end, the second is a condition!
 // w means do only if enemy is [w]eak etc.
-// [a]lways
+// [a]lways, if enemy [p]oisoned
 void eval_effect(char effect[EFFECT_LENGTH], player* plr, enemy* en, pile* pl_pile) {
     check_bufferlen();
     int tmpnum = 0;
@@ -134,82 +135,92 @@ void eval_effect(char effect[EFFECT_LENGTH], player* plr, enemy* en, pile* pl_pi
         else if (effect[i + 1] == '\0' || (isdigit(effect[i - 1]) && ( // Implement conditions here (yes, it's ugly)
                                                                        (effect[i + 1] == 'a') || // "always" condition i.e. no condition
                                                                        (effect[i + 1] == 'w' && en->weak) || // check for enemy weaken condition
-                                                                       (effect[i + 1] == 'W' && plr->weak)
+                                                                       (effect[i + 1] == 'W' && plr->weak) || // player weaken condition
+                                                                       (effect[i + 1] == 'p' && en->poison)
             ))) {
             switch (effect[i]) {
-                case 'd':
-                    en->take_damage(plr->mult_dmg_from(tmpnum));
-                    buffer_queue(colors.red + "You hit for " + std::to_string(en->mult_dmg_to(plr->mult_dmg_from(tmpnum))) + " damage" + colors.end); tmpnum = 0;
-                    break;
-                case 'D':
-                    plr->take_damage(en->mult_dmg_from(tmpnum));
-                    buffer_queue(colors.red + "You take " + std::to_string(plr->mult_dmg_to(en->mult_dmg_from(tmpnum))) + " damage" + colors.end); tmpnum = 0;
-                    break;
-                case 'b':
-                    plr->addblock(tmpnum);
-                    buffer_queue(colors.cyan + "You gain " + std::to_string(plr->mult_block(tmpnum)) + " block" + colors.end); tmpnum = 0;
-                    break;
-                case 'B':
-                    en->addblock(tmpnum);
-                    buffer_queue(colors.cyan + "Enemy gains " + std::to_string(en->mult_block(tmpnum)) + " block" + colors.end); tmpnum = 0;
-                    break;
-                case 's':
-                    plr->strength += tmpnum;
-                    buffer_queue(colors.magenta + "You gain " + std::to_string(tmpnum) + " strength" + colors.end); tmpnum = 0;
-                    break;
-                case 'S':
-                    en->strength += tmpnum;
-                    buffer_queue(colors.magenta + "Enemy gains " + std::to_string(tmpnum) + " strength" + colors.end); tmpnum = 0;
-                    break;
-                case 'w':
-                    plr->weak += tmpnum + 1; // +1 because weaken gets removed at the start of player turn
-                    buffer_queue(colors.magenta + "Enemy weakens you for " + std::to_string(tmpnum) + " more turn(s)" + colors.end); tmpnum = 0;
-                    break;
-                case 'W':
-                    en->weak += tmpnum + 1; // +1 because weaken gets removed at start of enemy turn
-                    buffer_queue(colors.magenta + "You weaken enemy for " + std::to_string(tmpnum) + " more turn(s)" + colors.end); tmpnum = 0;
-                    break;
-                case 'l':
-                    en->strength -= tmpnum;
-                    buffer_queue(colors.red + "Enemy loses " + std::to_string(tmpnum) + " strength" + colors.end); tmpnum = 0;
-                    break;
-                case 'L':
-                    plr->strength -= tmpnum;
-                    buffer_queue(colors.red + "You lose " + std::to_string(tmpnum) + " strength" + colors.end); tmpnum = 0;
-                    break;
-                case 'p':
-                    en->poison += tmpnum;
-                    buffer_queue(colors.green + std::to_string(tmpnum) + " poison has been applied to enemy" + colors.end); tmpnum = 0;
-                    break;
-                case 'h':
-                    plr->hp += tmpnum;
-                    if (plr->hp > plr->maxhp) plr->hp = plr->maxhp; // HP cap
-                    buffer_queue(colors.green + "You heal " + std::to_string(tmpnum) + " health" + colors.end); tmpnum = 0;
-                    break;
-                case 'H':
-                    en->hp += tmpnum;
-                    if (en->hp > en->maxhp) en->hp = en->maxhp; // HP cap
-                    buffer_queue(colors.green + "Enemy heals " + std::to_string(tmpnum) + " health" + colors.end); tmpnum = 0;
-                    break;
-                case 'm':
-                    plr->mana += 1; // mana is allowed over maxmana counter
-                    tmpnum = 0;
-                    break;
-                case 'G':
-                    plr->gold-=tmpnum;
-                    if (plr->gold < 0) plr->gold = 0;
-                    buffer_queue(colors.yellow + "Enemy steals " + std::to_string(tmpnum) + " gold" + colors.end); tmpnum = 0;
-                    break;
-                case 'c':
-                    for (int i = 0; i < tmpnum; i++) {
-                        if (pl_pile->hand.size() > 0) {
-                            int choice = select_from_hand(pl_pile, "Select a card to discard: ");
-                            discard_from_hand(pl_pile, choice);
-                        }
-                        else break;
+            case 'd':
+                en->take_damage(plr->mult_dmg_from(tmpnum));
+                buffer_queue(colors.red + "You hit for " + std::to_string(en->mult_dmg_to(plr->mult_dmg_from(tmpnum))) + " damage" + colors.end); tmpnum = 0;
+                break;
+            case 'D':
+                plr->take_damage(en->mult_dmg_from(tmpnum));
+                buffer_queue(colors.red + "You take " + std::to_string(plr->mult_dmg_to(en->mult_dmg_from(tmpnum))) + " damage" + colors.end); tmpnum = 0;
+                break;
+            case 'b':
+                plr->addblock(tmpnum);
+                buffer_queue(colors.cyan + "You gain " + std::to_string(plr->mult_block(tmpnum)) + " block" + colors.end); tmpnum = 0;
+                break;
+            case 'B':
+                en->addblock(tmpnum);
+                buffer_queue(colors.cyan + "Enemy gains " + std::to_string(en->mult_block(tmpnum)) + " block" + colors.end); tmpnum = 0;
+                break;
+            case 's':
+                plr->strength += tmpnum;
+                buffer_queue(colors.magenta + "You gain " + std::to_string(tmpnum) + " strength" + colors.end); tmpnum = 0;
+                break;
+            case 'S':
+                en->strength += tmpnum;
+                buffer_queue(colors.magenta + "Enemy gains " + std::to_string(tmpnum) + " strength" + colors.end); tmpnum = 0;
+                break;
+            case 'w':
+                plr->weak += tmpnum + 1; // +1 because weaken gets removed at the start of player turn
+                buffer_queue(colors.magenta + "Enemy weakens you for " + std::to_string(tmpnum) + " more turn(s)" + colors.end); tmpnum = 0;
+                break;
+            case 'W':
+                en->weak += tmpnum + 1; // +1 because weaken gets removed at start of enemy turn
+                buffer_queue(colors.magenta + "You weaken enemy for " + std::to_string(tmpnum) + " more turn(s)" + colors.end); tmpnum = 0;
+                break;
+            case 'l':
+                en->strength -= tmpnum;
+                buffer_queue(colors.red + "Enemy loses " + std::to_string(tmpnum) + " strength" + colors.end); tmpnum = 0;
+                break;
+            case 'L':
+                plr->strength -= tmpnum;
+                buffer_queue(colors.red + "You lose " + std::to_string(tmpnum) + " strength" + colors.end); tmpnum = 0;
+                break;
+            case 'p':
+                en->poison += tmpnum;
+                buffer_queue(colors.green + std::to_string(tmpnum) + " poison has been applied to enemy" + colors.end); tmpnum = 0;
+                break;
+            case 'h':
+                plr->hp += tmpnum;
+                if (plr->hp > plr->maxhp) plr->hp = plr->maxhp; // HP cap
+                buffer_queue(colors.green + "You heal " + std::to_string(tmpnum) + " health" + colors.end); tmpnum = 0;
+                break;
+            case 'H':
+                en->hp += tmpnum;
+                if (en->hp > en->maxhp) en->hp = en->maxhp; // HP cap
+                buffer_queue(colors.green + "Enemy heals " + std::to_string(tmpnum) + " health" + colors.end); tmpnum = 0;
+                break;
+            case 'm':
+                plr->mana += 1; // mana is allowed over maxmana counter
+                tmpnum = 0;
+                break;
+            case 'G':
+                plr->gold-=tmpnum;
+                if (plr->gold < 0) plr->gold = 0;
+                buffer_queue(colors.yellow + "Enemy steals " + std::to_string(tmpnum) + " gold" + colors.end); tmpnum = 0;
+                break;
+            case 'C':
+                for (int i = 0; i < tmpnum; i++)
+                    draw_one_card(plr, pl_pile);
+                buffer_queue(colors.end + "You draw " + std::to_string(tmpnum) + " card(s)"); tmpnum = 0;
+                break;
+            case 'f':
+                plr->hp-=tmpnum;
+                buffer_queue(colors.end + "You take " + std::to_string(tmpnum) + " damage"); tmpnum = 0;
+                break;
+            case 'c':
+                for (int i = 0; i < tmpnum; i++) {
+                    if (pl_pile->hand.size() > 0) {
+                        int choice = select_from_hand(pl_pile, "Select a card to discard: ");
+                        discard_from_hand(pl_pile, choice);
                     }
-                    tmpnum = 0;
-                    break;
+                    else break;
+                }
+                tmpnum = 0;
+                break;
             }
         }
         else tmpnum = 0;
@@ -258,9 +269,28 @@ void start_fight(player* pl, pile* pl_cards) {
     shuffle_deck(&pl_cards->draw);
 }
 
+// draw a single card
+void draw_one_card(player* pl, pile* pl_cards) {
+    if (pl_cards->hand.size() >= pl->drawlimit)
+        return;
+    if (pl_cards->draw.size() > 0) {
+        pl_cards->hand.push_back(pl_cards->draw.at(0));
+        pl_cards->draw.erase(pl_cards->draw.begin());
+    }
+    else if (pl_cards->discard.size() > 0) {
+        pl_cards->draw = pl_cards->discard;
+        shuffle_deck(&pl_cards->draw);
+        pl_cards->hand.push_back(pl_cards->draw.at(0));
+        pl_cards->draw.erase(pl_cards->draw.begin());
+        pl_cards->discard.erase(pl_cards->discard.begin(), pl_cards->discard.end());
+    }
+}
+
 // draw a full hand of cards
 void draw_hand(player* pl, pile* pl_cards) {
     for (int i = 0; i < pl->drawcards; i++) {
+        if (pl_cards->hand.size() >= pl->drawlimit)
+            break;
         if (pl_cards->draw.size() > 0) {
             pl_cards->hand.push_back(pl_cards->draw.at(0));
             pl_cards->draw.erase(pl_cards->draw.begin());
@@ -503,7 +533,7 @@ void init_game(vector<enemy>* env, vector<card>* crds) {
     env->push_back(enemy("Strong goblin", 70, 101, { "93Da","91Ba","93Da","93Da","91Ba","6Sa" }));
 
     // Add after all non-upgraded cards!
-    // name - desc - effect - mana - rarity - color - type (0 attack, 1 skill)
+    // name - desc - effect - mana - rarity - color - type (0 attack, 1 skill, 2 power)
     // '+' after card name means upgraded ! each upgraded card has to follow this naming !
     // TODO: shuffle curse, vulnerable, can't draw more this turn
     crds->push_back(card("Strike", "Deal _d_ damage", {5}, "5daD", 1, 0, colors.red, 0));
@@ -512,15 +542,19 @@ void init_game(vector<enemy>* env, vector<card>* crds) {
     crds->push_back(card("Fear strike", "Deal _d_ damage and apply 1 weak", {3}, "3da1WaD", 0, 0, colors.magenta, 0));
     crds->push_back(card("Instinct", "Deal _d_ damage, if enemy is weak gain 1 mana", {4}, "4d1mwD", 1, 1, colors.red, 0));
     crds->push_back(card("Pain", "Deal _d_ damage and apply 2 weak", {12}, "93da1WaD", 1, 1, colors.red, 0));
-    crds->push_back(card("Shockwave", "Deal _d_ damage and gain _b_ block", {4,4}, "4da4baD", 1, 1, colors.cyan, 1));
+    crds->push_back(card("Shockwave", "Deal _d_ damage and gain _b_ block", {4,4}, "4da4baD", 1, 1, colors.cyan, 0));
     crds->push_back(card("Clean strike", "Deal _d_ damage and draw one card", {6}, "6da1CaD", 1, 1, colors.red, 0));
     crds->push_back(card("Boomerang", "Deal _d_ damage 3 times and take 3 damage", {3}, "3da3da3da3DaD", 1, 1, colors.red, 0));
     crds->push_back(card("Claw", "Deal _d_ damage twice", {4},  "4da4daD", 1, 1, colors.red, 0));
-    crds->push_back(card("Sacrifice", "Gain 2 mana, lose 3 health", {}, "2ma3DaD", 1, 1, colors.magenta, 1));
+    crds->push_back(card("Sacrifice", "Gain 2 mana, lose 3 health", {}, "2ma3faD", 1, 1, colors.magenta, 2));
     crds->push_back(card("Crack the sky", "Deal _d_ damage, exhaust", {25}, "997daE", 1, 1, colors.red, 0));
-    crds->push_back(card("Disarm", "Enemy loses 4 strength", {}, "4laD", 1, 1, colors.red, 0));
+    crds->push_back(card("Disarm", "Enemy loses 2 strength", {}, "2laD", 1, 1, colors.red, 2));
+    crds->push_back(card("Divine intellect", "Draw 2 cards", {}, "2CaD", 1, 1, colors.end, 2));
+    crds->push_back(card("Acidic flesh", "Apply 6 poison", {}, "6paD", 1, 1, colors.green, 1));
+    crds->push_back(card("Poisoned wound", "Apply 6 poison, if enemy is poisoned draw a card", {}, "6pa1CpD", 1, 1, colors.green, 1));
 }
 
+// upgrade card from player deck
 void upgrade_card(pile* plc, int index) {
     for (long unsigned int i = 0; i < cards.size(); i++) {
         if (cards.at(i).name == plc->deck.at(index).name + "+")
@@ -674,7 +708,6 @@ void eval_encounter(player* pl, pile* plc, vector_tree<string>* enc) {
     string ef;
     int c;
     cin.ignore();
-    int addpos = 0;
     while (true) {
         if (enc->getChildren(pos).size()) {
             if (enc->getName(enc->getChildren(pos).at(0)).at(0) == '_') {
