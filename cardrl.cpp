@@ -195,6 +195,11 @@ void eval_effect(char effect[EFFECT_LENGTH], player* plr, enemy* en, pile* pl_pi
                     plr->mana += 1; // mana is allowed over maxmana counter
                     tmpnum = 0;
                     break;
+                case 'G':
+                    plr->gold-=tmpnum;
+                    if (plr->gold < 0) plr->gold = 0;
+                    buffer_queue(colors.yellow + "Enemy steals " + std::to_string(tmpnum) + " gold" + colors.end); tmpnum = 0;
+                    break;
                 case 'c':
                     for (int i = 0; i < tmpnum; i++) {
                         if (pl_pile->hand.size() > 0) {
@@ -280,10 +285,28 @@ string enemy_intention_to_string(player* pl, enemy* en) {
         if (intend[i] == '\0') break;
         if (isdigit(intend[i])) tmpnum += (intend[i] - '0');
         else {                                                           // multiply enemy damage by player taken damage
-            if (intend[i] == 'D') { ret += ("Attack for " + std::to_string(pl->mult_dmg_to(en->mult_dmg_from(tmpnum))) + " damage. || "); tmpnum = 0; }
-            else if (intend[i] == 'B') { ret += ("Apply " + std::to_string(en->mult_block(tmpnum)) + " block. || "); tmpnum = 0; }
-            else if (intend[i] == 'S') { ret += ("Gain " + std::to_string(tmpnum) + " strength. || "); tmpnum = 0; }
-            else if (intend[i] == 'w') { ret += ("Weaken " + std::to_string(tmpnum) + " turns. || "); tmpnum = 0; }
+            switch(intend[i]) {
+                case 'D':
+                    ret += ("Attack for " + std::to_string(pl->mult_dmg_to(en->mult_dmg_from(tmpnum))) + " damage. || ");
+                    tmpnum = 0;
+                    break;
+                case 'B':
+                    ret += ("Apply " + std::to_string(en->mult_block(tmpnum)) + " block. || ");
+                    tmpnum = 0;
+                    break;
+                case 'S':
+                    ret += ("Gain " + std::to_string(tmpnum) + " strength. || ");
+                    tmpnum = 0;
+                    break;
+                case 'w':
+                    ret += ("Weaken " + std::to_string(tmpnum) + " turns. || ");
+                    tmpnum = 0;
+                    break;
+                case 'G':
+                    ret += ("Steal " + std::to_string(tmpnum) + " gold. || ");
+                    tmpnum = 0;
+                    break;
+            }
         }
     }
 
@@ -470,7 +493,10 @@ void init_game(vector<enemy>* env, vector<card>* crds) {
     // Levels 0-2 are all act one, just different difficulties
     // Name, HP, level, effects
     env->push_back(enemy("Goblin", 20, 0, { "6Da","5Ba" }));
+    env->push_back(enemy("Violent Duck", 20, 0, { "9Da","3Ba" }));
     env->push_back(enemy("Goblin", 30, 1, { "8Da","9Ba","9Da" }));
+    env->push_back(enemy("A Very Violent Duck", 20, 2, { "995Da","6Ba" }));
+    env->push_back(enemy("Thief", 20, 1, { "8Da9G","6Ba" }));
     env->push_back(enemy("Cultist", 30, 1, { "8Da","7Ba","2Sa" }));
     env->push_back(enemy("Cultist", 30, 2, { "12Da","10Ba","2Sa" }));
     env->push_back(enemy("Hobgoblin", 30, 1, { "8Da","7Ba","2wa" }));
