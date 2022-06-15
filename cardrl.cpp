@@ -580,12 +580,12 @@ card select_random_card() {
     while (true) {
         if (cr.rarity == 0) // don't select started cards
             cr = *select_randomly(cards.begin(), cards.end());
-        if (cr.rarity == 2) {
+        if (cr.rarity == 1) {
             if (!one_chance_in(3))
                 cr = *select_randomly(cards.begin(), cards.end());
             else break;
         }
-        if (cr.rarity == 3) {
+        if (cr.rarity == 2) {
             if (one_chance_in(3))
                 cr = *select_randomly(cards.begin(), cards.end());
             else break;
@@ -752,13 +752,17 @@ void eval_encounter(player* pl, pile* plc, vector_tree<string>* enc) {
 
 // Create a shop
 void create_shop(player* pl, pile* plc) {
-    int shoplimit = 10; // number of cards for sale
+    // TODO: buy removing a card from deck
+    while (getchar() != '\n'); // clear input buffer
+    int shoplimit = 8; // number of cards for sale
+    enemy en = enemy("", 0, 0, {}); // dummy enemy
     vector<card> shopcards;
     vector<int> prices;
     for (int i = 0; i < shoplimit; i++) {
         card cr = select_random_card();
         while (cr.rarity != 1 && cr.rarity != 2 && cr.rarity != 3) // skip upgraded cards
             cr = select_random_card();
+        shopcards.push_back(cr);
     }
     int price;
     for (int i = 0; i < shoplimit; i++) {
@@ -775,12 +779,20 @@ void create_shop(player* pl, pile* plc) {
         cout << "\n\n";
         cout << "Welcome to the shop!\n\n";
         for (int i = 0; i < shoplimit; i++) {
-            cout << "(" << i+1 << ")" << shopcards.at(i).name << " || " << shopcards.at(i).desc << " || Mana cost: " << shopcards.at(i).cost
-                 << " || Cost: " << prices.at(i) << " gold"<< "\n";
+            string cname = shopcards.at(i).name;
+            while (cname.length() < 20) {
+                cname += " ";
+            }
+            string cdesc = get_card_desc(pl, &en, shopcards.at(i));
+            while (cdesc.length() < 65) {
+                cdesc += " ";
+            }
+            cout << "(" << i+1 << ") " << cname << "\t|| " << cdesc << "\t|| Mana cost: " << shopcards.at(i).cost
+                 << "\t|| Cost: " << prices.at(i) << " gold"<< "\n";
         }
-        int c;
-        c = key_press() - '0' - 1;
-        if (c == 'q') break;
+        char ch = key_press();
+        if (ch == 'q') break;
+        int c = ch - '0' - 1;
         if (prices.at(c) <= pl->gold) {
             pl->gold -= prices.at(c);
             plc->deck.push_back(shopcards.at(c));
