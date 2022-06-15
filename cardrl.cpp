@@ -421,7 +421,7 @@ void print_game(player* pl, pile* pl_cards, enemy* en) {
         << "\t\t\tDeck: " << pl_cards->deck.size() << " cards";
     cout << colors.yellow << "\t\t\tGold: " << pl->gold << colors.end << "\n";
     cout << string(111, '-') << "\n";
-    cout << colors.yellow << pl->name << " the ironclad\t\t\t\t\t\t\t\t\t\t" << en->name << colors.end << std::endl;
+    cout << colors.yellow << pl->name << " the Ironclad\t\t\t\t\t\t\t\t\t\t" << en->name << colors.end << std::endl;
     cout << "Draw pile: " << colors.yellow << pl_cards->draw.size() << " cards\t\t\t\t\t\t\t\t\t\t" << colors.end << "Discard pile: "
         << colors.yellow << pl_cards->discard.size() << " cards\n" << colors.end;
     cout << "HP: " << colors.green << pl->hp << "/" << pl->maxhp << colors.end << "\t\t\t\t\t\t\t\t\t\t\tEnemy HP: " << colors.green << en->hp << "/" << en->maxhp << colors.end << "\n";
@@ -738,11 +738,54 @@ void eval_encounter(player* pl, pile* plc, vector_tree<string>* enc) {
         }
     }
     cls();
-    cout << enc->getName(pos) << "\n";
+    cout << "Act:" << pl->act+1 << "/3" << "\t\t\tLevel: " << pl->level+1 << "\n";
+    cout << "HP: " << colors.green << pl->hp << "/" << pl->maxhp << colors.end;
+    cout << "\t\tGold: " << colors.yellow << pl->gold << colors.end;
+    cout << "\n\n";
+    cout << enc->getName(pos) << "\n\n" << "[press return to continue]";
     if (ef != "") {
         char e[EFFECT_LENGTH];
         strcpy(e, ef.c_str());
         eval_effect(e, pl, &en ,plc);
+    }
+}
+
+// Create a shop
+void create_shop(player* pl, pile* plc) {
+    int shoplimit = 10; // number of cards for sale
+    vector<card> shopcards;
+    vector<int> prices;
+    for (int i = 0; i < shoplimit; i++) {
+        card cr = select_random_card();
+        while (cr.rarity != 1 && cr.rarity != 2 && cr.rarity != 3) // skip upgraded cards
+            cr = select_random_card();
+    }
+    int price;
+    for (int i = 0; i < shoplimit; i++) {
+        if (shopcards.at(i).rarity == 1) price = get_random_in_range(60, 120);
+        else if (shopcards.at(i).rarity == 2) price = get_random_in_range(150, 220);
+        else if (shopcards.at(i).rarity == 3) price = get_random_in_range(230, 300);
+        prices.push_back(price);
+    }
+    while (true) {
+        cls();
+        cout << "Act:" << pl->act+1 << "/3" << "\t\t\tLevel: " << pl->level+1 << "\n";
+        cout << "HP: " << colors.green << pl->hp << "/" << pl->maxhp << colors.end;
+        cout << "\t\tGold: " << colors.yellow << pl->gold << colors.end;
+        cout << "\n\n";
+        cout << "Welcome to the shop!\n\n";
+        for (int i = 0; i < shoplimit; i++) {
+            cout << "(" << i+1 << ")" << shopcards.at(i).name << " || " << shopcards.at(i).desc << " || Mana cost: " << shopcards.at(i).cost
+                 << " || Cost: " << prices.at(i) << " gold"<< "\n";
+        }
+        int c;
+        c = key_press() - '0' - 1;
+        if (c == 'q') break;
+        if (prices.at(c) <= pl->gold) {
+            pl->gold -= prices.at(c);
+            plc->deck.push_back(shopcards.at(c));
+            shopcards.erase(shopcards.begin() + c, shopcards.begin() + c + 1);
+        }
     }
 }
 
@@ -773,7 +816,7 @@ int main() {
     while (pl.act != 2) {
         while (pl.level != 10) {
             random_encounter(&pl, &pl_pile); // Run a random encounter
-            cin.ignore();
+            create_shop(&pl, &pl_pile);
             create_fight(&pl, &pl_pile, &en_main);
             en_main = pick_enemy(&pl);
             pl.level++;
