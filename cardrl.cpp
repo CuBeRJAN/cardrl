@@ -514,6 +514,7 @@ void create_fight(player* pl, pile* plc, enemy* en_main) {
         en_main->end_turn();
         choice = '0';
     }
+    while (getchar() != '\n');
 }
 
 // TODO: * read from some kind of proper database
@@ -748,12 +749,12 @@ void eval_encounter(player* pl, pile* plc, vector_tree<string>* enc) {
         strcpy(e, ef.c_str());
         eval_effect(e, pl, &en ,plc);
     }
+    while (getchar() != '\n');
 }
 
 // Create a shop
 void create_shop(player* pl, pile* plc) {
     // TODO: buy removing a card from deck
-    while (getchar() != '\n'); // clear input buffer
     int shoplimit = 8; // number of cards for sale
     enemy en = enemy("", 0, 0, {}); // dummy enemy
     vector<card> shopcards;
@@ -828,8 +829,8 @@ int main() {
     while (pl.act != 2) {
         while (pl.level != 10) {
             random_encounter(&pl, &pl_pile); // Run a random encounter
-            create_shop(&pl, &pl_pile);
             create_fight(&pl, &pl_pile, &en_main);
+            create_shop(&pl, &pl_pile);
             en_main = pick_enemy(&pl);
             pl.level++;
             if (pl.level == 2 || pl.level == 6)
