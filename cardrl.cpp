@@ -397,7 +397,7 @@ string get_card_desc(player* pl, enemy* en, card cr) {
             desc.insert(vec.at(i)+3, std::to_string(pl->mult_block(cr.values.at(i)))); // Multiply block
         }
     }
-    for (int i = 0; i < vec.size(); i++) {
+    for (int i = vec.size()-1; i>= 0; i++) {
         for (int j = 0; j < 3; j++) {
             if (!isdigit(desc.at(vec.at(i))))
                 desc.erase(desc.begin() + vec.at(i), desc.begin() + vec.at(i)+1);
@@ -414,8 +414,12 @@ void print_game(player* pl, pile* pl_cards, enemy* en) {
     vector<int> vdmg;
     vector<int> vblc;
     vector<string> draw_descs;
+    vector<string> draw_names;
     for (long unsigned int i = 0; i < pl_cards->hand.size(); i++) {
          draw_descs.push_back(get_card_desc(pl, en, pl_cards->hand.at(i)));
+    }
+    for (long unsigned int i = 0; i < pl_cards->hand.size(); i++) {
+         draw_names.push_back(pl_cards->hand.at(i).name);
     }
     cout << colors.green << "Act: " << pl->act + 1 << "/3" << "\t\t\t" << "Level: " << pl->level + 1 << colors.red
         << "\t\t\tDeck: " << pl_cards->deck.size() << " cards";
@@ -429,12 +433,15 @@ void print_game(player* pl, pile* pl_cards, enemy* en) {
     cout << "Mana: " << colors.magenta << pl->mana << colors.end << "\t\t\t\t\t\t\t\t\t\t\t\tEnemy intent: " << colors.magenta << enemy_intention_to_string(pl, en) << colors.end << "\n";
     cout << string(111, '-') << "\n";
     string mydesc;
+    string myname;
     int cnt = 0; // Count number of cards so that message buffer is always at the same height
     for (unsigned long int i = 0; i < pl_cards->hand.size(); i++) {
         cnt++;
         mydesc = draw_descs.at(i);
         while (mydesc.length() < 60) mydesc += " ";
-        cout << pl_cards->hand.at(i).color << "(" << i + 1 << ") " << pl_cards->hand.at(i).name << colors.end << "\t\t\t:: "
+        myname = draw_descs.at(i);
+        while (myname.length() < 25) mydesc += " ";
+        cout << pl_cards->hand.at(i).color << "(" << i + 1 << ") " << myname << colors.end << "\t\t\t:: "
             << mydesc << colors.magenta
             << "\t" << ":: Mana cost: " << pl_cards->hand.at(i).cost << colors.end << std::endl;
     }
@@ -490,6 +497,7 @@ void play_card_from_hand(player* pl, pile* pl_cards, enemy* en, int index) {
 }
 
 void create_fight(player* pl, pile* plc, enemy* en_main) {
+    cin.clear();
     start_fight(pl, plc);
     bool fight = true;
     char choice = '0';
@@ -514,6 +522,7 @@ void create_fight(player* pl, pile* plc, enemy* en_main) {
         en_main->end_turn();
         choice = '0';
     }
+    pl->gold += 50+(en_main->level*20)+(pl->act*40);
     while (getchar() != '\n');
 }
 
@@ -701,6 +710,7 @@ vector_tree<string> get_random_encounter_tree() {
 }
 
 void eval_encounter(player* pl, pile* plc, vector_tree<string>* enc) {
+    cin.clear();
     enemy en = enemy("", 0, 0, { }); // Need dummy enemy to evaluate effect
     int pos = 0;
     bool isEven = true;
@@ -749,11 +759,12 @@ void eval_encounter(player* pl, pile* plc, vector_tree<string>* enc) {
         strcpy(e, ef.c_str());
         eval_effect(e, pl, &en ,plc);
     }
-    while (getchar() != '\n');
+    cin.ignore();
 }
 
 // Create a shop
 void create_shop(player* pl, pile* plc) {
+    cin.clear();
     // TODO: buy removing a card from deck
     int shoplimit = 8; // number of cards for sale
     enemy en = enemy("", 0, 0, {}); // dummy enemy
@@ -779,7 +790,7 @@ void create_shop(player* pl, pile* plc) {
         cout << "\t\tGold: " << colors.yellow << pl->gold << colors.end;
         cout << "\n\n";
         cout << "Welcome to the shop!\n\n";
-        for (int i = 0; i < shoplimit; i++) {
+        for (int i = 0; i < shopcards.size(); i++) {
             string cname = shopcards.at(i).name;
             while (cname.length() < 20) {
                 cname += " ";
@@ -794,12 +805,15 @@ void create_shop(player* pl, pile* plc) {
         char ch = key_press();
         if (ch == 'q') break;
         int c = ch - '0' - 1;
+        cout << c;
         if (prices.at(c) <= pl->gold) {
             pl->gold -= prices.at(c);
             plc->deck.push_back(shopcards.at(c));
-            shopcards.erase(shopcards.begin() + c, shopcards.begin() + c + 1);
+            shopcards.erase(shopcards.begin() + c, shopcards.begin() + c+1);
+            prices.erase(prices.begin() + c, prices.begin() + c+1);
         }
     }
+    cin.clear();
 }
 
 // Each encounter is a tree of interactions, ending with some effect (or no effect at all), marked by a '_'
