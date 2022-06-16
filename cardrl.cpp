@@ -440,8 +440,8 @@ void print_game(player* pl, pile* pl_cards, enemy* en) {
         mydesc = draw_descs.at(i);
         while (mydesc.length() < 60) mydesc += " ";
         myname = draw_names.at(i);
-        while (myname.length() < 25) myname += " ";
-        cout << pl_cards->hand.at(i).color << "(" << i + 1 << ") " << myname << colors.end << "\t\t\t:: "
+        while (myname.length() < 30) myname += " ";
+        cout << pl_cards->hand.at(i).color << "(" << i + 1 << ") " << myname << colors.end << " :: "
             << mydesc << colors.magenta
             << "\t" << ":: Mana cost: " << pl_cards->hand.at(i).cost << colors.end << std::endl;
     }
@@ -805,7 +805,6 @@ void create_shop(player* pl, pile* plc) {
         char ch = key_press();
         if (ch == 'q') break;
         int c = ch - '0' - 1;
-        cout << c;
         if (prices.at(c) <= pl->gold) {
             pl->gold -= prices.at(c);
             plc->deck.push_back(shopcards.at(c));
