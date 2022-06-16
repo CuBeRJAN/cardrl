@@ -12,8 +12,8 @@ enemy::enemy(std::string n, int mhp, int l, std::vector<std::string> ac) {
 
 
 int enemy::mult_dmg_from(int dmg) {
-    if (weak) return (dmg + (dmg * (0.2 * strength))) * 0.6;
-    return (dmg + (dmg * (0.2 * strength)));
+    if (weak) return (dmg + (dmg * (0.1 * strength))) * 0.8;
+    return (dmg + (dmg * (0.1 * strength)));
 }
 
 void enemy::end_turn() {

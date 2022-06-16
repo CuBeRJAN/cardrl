@@ -46,8 +46,8 @@ void player::take_damage_forced(int dmg) {
 
 // multiply outgoing damage
 int player::mult_dmg_from(int dmg) {
-    if (weak) return (dmg + (dmg * (0.2 * strength))) * 0.6;
-    return (dmg + (dmg * (0.2 * strength))); // maybe change this calculation somehow, strength is way too impactful
+    if (weak) return (dmg + (dmg * (0.1 * strength))) * 0.8;
+    return (dmg + (dmg * (0.1 * strength))); // maybe change this calculation somehow, strength is way too impactful
 }
 
 void player::end_turn() {
