@@ -438,12 +438,12 @@ void print_game(player* pl, pile* pl_cards, enemy* en) {
     for (unsigned long int i = 0; i < pl_cards->hand.size(); i++) {
         cnt++;
         mydesc = draw_descs.at(i);
-        while (mydesc.length() < 60) mydesc += " ";
+        while (mydesc.length() < 61) mydesc += " ";
         myname = draw_names.at(i);
-        while (myname.length() < 30) myname += " ";
+        while (myname.length() < 27) myname += " ";
         cout << pl_cards->hand.at(i).color << "(" << i + 1 << ") " << myname << colors.end << " :: "
             << mydesc << colors.magenta
-            << "\t" << ":: Mana cost: " << pl_cards->hand.at(i).cost << colors.end << std::endl;
+            << ":: Mana cost: " << pl_cards->hand.at(i).cost << colors.end << std::endl;
     }
     cout << "\n\n\n";
     cout << "weak: " << colors.magenta << pl->weak << colors.end << "\t\tstr: " << colors.red << pl->strength << colors.end
