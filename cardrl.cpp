@@ -165,11 +165,11 @@ void eval_effect(char effect[EFFECT_LENGTH], player* plr, enemy* en, pile* pl_pi
                 break;
             case 'w':
                 plr->weak += tmpnum + 1; // +1 because weaken gets removed at the start of player turn
-                buffer_queue(colors.magenta + "Enemy weakens you for " + std::to_string(tmpnum) + " more turn(s)" + colors.end); tmpnum = 0;
+                buffer_queue(colors.magenta + "Enemy weakens you for " + std::to_string(tmpnum + 1) + " more turn(s)" + colors.end); tmpnum = 0;
                 break;
             case 'W':
                 en->weak += tmpnum + 1; // +1 because weaken gets removed at start of enemy turn
-                buffer_queue(colors.magenta + "You weaken enemy for " + std::to_string(tmpnum) + " more turn(s)" + colors.end); tmpnum = 0;
+                buffer_queue(colors.magenta + "You weaken enemy for " + std::to_string(tmpnum + 1) + " more turn(s)" + colors.end); tmpnum = 0;
                 break;
             case 'l':
                 en->strength -= tmpnum;
@@ -508,6 +508,11 @@ void create_fight(player* pl, pile* plc, enemy* en_main) {
     char choice = '0';
     while (fight) {
         en_main->get_intention();
+        if (!en_main->check_hp()) {
+            cout << colors.red << "You kill the " << en_main->name << "!\n" << colors.end;
+            fight = false;
+            break;
+        }
         pl->begin_turn(plc);
         print_game(pl, plc, en_main);
         while (choice != 'q') {
@@ -537,15 +542,15 @@ void init_game(vector<enemy>* env, vector<card>* crds) {
     // +100 to level is elite
     // Levels 0-2 are all act one, just different difficulties
     // Name, HP, level, effects
-    env->push_back(enemy("Goblin", 20, 0, { "6Da","5Ba" }));
-    env->push_back(enemy("Violent Duck", 20, 0, { "9Da","3Ba" }));
-    env->push_back(enemy("Goblin", 30, 1, { "8Da","9Ba","9Da" }));
-    env->push_back(enemy("A Very Violent Duck", 20, 2, { "995Da","6Ba" }));
-    env->push_back(enemy("Thief", 20, 1, { "8Da9G","6Ba" }));
-    env->push_back(enemy("Cultist", 30, 1, { "8Da","7Ba","2Sa" }));
-    env->push_back(enemy("Cultist", 30, 2, { "12Da","10Ba","2Sa" }));
-    env->push_back(enemy("Hobgoblin", 30, 1, { "8Da","7Ba","2wa" }));
-    env->push_back(enemy("Strong goblin", 70, 101, { "93Da","91Ba","93Da","93Da","91Ba","6Sa" }));
+    env->push_back(enemy("Goblin", 40, 0, { "6Da","5Ba","6Da" }));
+    env->push_back(enemy("Violent Duck", 42, 0, { "9Da","3Ba","8Da" }));
+    env->push_back(enemy("Goblin", 46, 1, { "8Da","9Ba","9Da" }));
+    env->push_back(enemy("A Very Violent Duck", 50, 2, { "995Da","6Ba" }));
+    env->push_back(enemy("Thief", 55, 1, { "8Da9G","6Ba" }));
+    env->push_back(enemy("Cultist", 42, 1, { "8Da","7Ba","2Sa","9Da","8Da" }));
+    env->push_back(enemy("Cultist", 48, 2, { "12Da","91Ba","2Sa","91Da","91Da" }));
+    env->push_back(enemy("Hobgoblin", 45, 1, { "8Da","7Ba","2wa","8Da","8Da" }));
+    env->push_back(enemy("Strong goblin", 100, 101, { "93Da","91Ba","93Da","93Da","91Ba","6Sa" }));
 
     // Add after all non-upgraded cards!
     // name - desc - effect - mana - rarity - color - type (0 attack, 1 skill, 2 power)
@@ -566,7 +571,7 @@ void init_game(vector<enemy>* env, vector<card>* crds) {
     crds->push_back(card("Disarm", "Enemy loses 2 strength", {}, "2laD", 1, 1, colors.red, 2));
     crds->push_back(card("Divine intellect", "Draw 2 cards", {}, "2CaD", 1, 1, colors.end, 2));
     crds->push_back(card("Acidic flesh", "Apply 6 poison", {}, "6paD", 1, 1, colors.green, 1));
-    crds->push_back(card("Poisoned wound", "Apply 6 poison, if enemy is poisoned draw a card", {}, "6pa1CpD", 1, 1, colors.green, 1));
+    crds->push_back(card("Poisoned wound", "Apply 4 poison, if enemy is poisoned draw a card", {}, "6pa1CpD", 1, 1, colors.green, 1));
 }
 
 // upgrade card from player deck

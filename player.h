@@ -23,8 +23,8 @@ public:
     int maxmana = 2;
     int mana;
     int weak = 0; // -1 weak each turn
-    int hp = 25;
-    int maxhp = 25;
+    int maxhp = 50;
+    int hp = maxhp;
     int block = 0;
     int strength = 0;
     bool confused = false; // confusion effect

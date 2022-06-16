@@ -91,6 +91,7 @@ void enemy::commit_intention(player* pl, pile* plc) {
 }
 
 void enemy::begin_turn() {
+    decrease_counters();
     if (barricade) barricade--;
     if (poison)
         take_damage_forced(poison);
