@@ -102,6 +102,7 @@ void eval_card(player*, pile*, enemy*, card); // evaluate card
 void discard_from_hand(pile*, int); // discard card from hand by index
 void exhaust_from_hand(pile*, int); // exhaust from hand by index
 void play_card_from_hand(pile*, int); // play from hand by index
+void removeSubstrs(std::string&, std::string);
 void create_fight(player*, pile*, enemy*); // start the fight loop
 void create_shop(player*, pile*); // create a shop with cards
 void init_game(std::vector<enemy>*, std::vector<card>*); // initialize games cards and enemies

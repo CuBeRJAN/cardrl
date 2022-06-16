@@ -379,6 +379,15 @@ vector<int> get_substring_index(string data, string sub) {
     return ret;
 }
 
+// remove substring from string
+void removeSubstrs(string& s, string p) {
+  string::size_type n = p.length();
+  for (string::size_type i = s.find(p);
+      i != string::npos;
+      i = s.find(p))
+      s.erase(i, n);
+}
+
 // Get card description
 string get_card_desc(player* pl, enemy* en, card cr) {
     vector<int> vecdmg;
@@ -397,12 +406,8 @@ string get_card_desc(player* pl, enemy* en, card cr) {
             desc.insert(vec.at(i)+3, std::to_string(pl->mult_block(cr.values.at(i)))); // Multiply block
         }
     }
-    for (int i = vec.size()-1; i>= 0; i--) {
-        for (int j = 0; j < 3; j++) {
-            if (!isdigit(desc.at(vec.at(i))))
-                desc.erase(desc.begin() + vec.at(i), desc.begin() + vec.at(i)+1);
-        }
-    }
+    removeSubstrs(desc, "_d_");
+    removeSubstrs(desc, "_b_");
     return desc;
 }
 
