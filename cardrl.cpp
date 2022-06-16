@@ -397,7 +397,7 @@ string get_card_desc(player* pl, enemy* en, card cr) {
             desc.insert(vec.at(i)+3, std::to_string(pl->mult_block(cr.values.at(i)))); // Multiply block
         }
     }
-    for (int i = vec.size()-1; i>= 0; i++) {
+    for (int i = vec.size()-1; i>= 0; i--) {
         for (int j = 0; j < 3; j++) {
             if (!isdigit(desc.at(vec.at(i))))
                 desc.erase(desc.begin() + vec.at(i), desc.begin() + vec.at(i)+1);
@@ -439,8 +439,8 @@ void print_game(player* pl, pile* pl_cards, enemy* en) {
         cnt++;
         mydesc = draw_descs.at(i);
         while (mydesc.length() < 60) mydesc += " ";
-        myname = draw_descs.at(i);
-        while (myname.length() < 25) mydesc += " ";
+        myname = draw_names.at(i);
+        while (myname.length() < 25) myname += " ";
         cout << pl_cards->hand.at(i).color << "(" << i + 1 << ") " << myname << colors.end << "\t\t\t:: "
             << mydesc << colors.magenta
             << "\t" << ":: Mana cost: " << pl_cards->hand.at(i).cost << colors.end << std::endl;
