@@ -725,7 +725,7 @@ void eval_encounter(player* pl, pile* plc, vector_tree<string>* enc) {
     int pos = 0;
     bool isEven = true;
     vector<int> nodes;
-    char choice;
+    int choice;
     string ef;
     int c;
     cin.ignore();
@@ -752,6 +752,10 @@ void eval_encounter(player* pl, pile* plc, vector_tree<string>* enc) {
                     }
                     choice = key_press();
                     c = choice - '0' - 1;
+                    while (choice < 0 || choice >= (enc->getChildren(pos).size())) {
+                        choice = key_press();
+                        c = choice - '0' - 1;
+                    }
                     pos = enc->getChildren(enc->getChildren(pos).at(c)).at(0);
                 }
                 isEven = !isEven;
@@ -813,8 +817,13 @@ void create_shop(player* pl, pile* plc) {
                  << "\t|| Cost: " << prices.at(i) << " gold"<< "\n";
         }
         char ch = key_press();
-        if (ch == 'q') break;
+        if (ch == 'q') return;
         int c = ch - '0' - 1;
+        while (c < 0 || c >= shopcards.size()) {
+            char ch = key_press();
+            if (ch == 'q') return;
+            c = ch - '0' - 1;
+        }
         if (prices.at(c) <= pl->gold) {
             pl->gold -= prices.at(c);
             plc->deck.push_back(shopcards.at(c));
