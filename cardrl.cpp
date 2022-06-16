@@ -752,7 +752,7 @@ void eval_encounter(player* pl, pile* plc, vector_tree<string>* enc) {
                     }
                     choice = key_press();
                     c = choice - '0' - 1;
-                    while (choice < 0 || choice >= (enc->getChildren(pos).size())) {
+                    while (c < 0 || c >= (enc->getChildren(pos).size())) {
                         choice = key_press();
                         c = choice - '0' - 1;
                     }
