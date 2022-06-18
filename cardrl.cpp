@@ -194,7 +194,7 @@ void eval_effect(char effect[EFFECT_LENGTH], player* plr, enemy* en, pile* pl_pi
                 buffer_queue(colors.green + "Enemy heals " + std::to_string(tmpnum) + " health" + colors.end); tmpnum = 0;
                 break;
             case 'm':
-                plr->mana += 1; // mana is allowed over maxmana counter
+                plr->mana += tmpnum; // mana is allowed over maxmana counter
                 tmpnum = 0;
                 break;
             case 'G':
@@ -639,6 +639,7 @@ player create_player() {
     player pl;
     cout << "Enter your name:\n";
     cin >> pl.name;
+    cin.clear();
     return pl;
 }
 
@@ -728,7 +729,6 @@ void eval_encounter(player* pl, pile* plc, vector_tree<string>* enc) {
     int choice;
     string ef;
     int c;
-    cin.ignore();
     while (true) {
         if (enc->getChildren(pos).size()) {
             if (enc->getName(enc->getChildren(pos).at(0)).at(0) == '_') {
