@@ -25,6 +25,7 @@
 #include "pile.h"
 #include "player.h"
 #include "enemy.h"
+// TODO: some (incorrect) inputs can crash the game, do error handling
 
 
 // global variables
@@ -164,12 +165,12 @@ void eval_effect(char effect[EFFECT_LENGTH], player* plr, enemy* en, pile* pl_pi
                 buffer_queue(colors.magenta + "Enemy gains " + std::to_string(tmpnum) + " strength" + colors.end); tmpnum = 0;
                 break;
             case 'w':
-                plr->weak += tmpnum + 1; // +1 because weaken gets removed at the start of player turn
-                buffer_queue(colors.magenta + "Enemy weakens you for " + std::to_string(tmpnum + 1) + " more turn(s)" + colors.end); tmpnum = 0;
+                plr->weak += tmpnum + 1;
+                buffer_queue(colors.magenta + "Enemy weakens you for " + std::to_string(tmpnum) + " more turn(s)" + colors.end); tmpnum = 0;
                 break;
             case 'W':
-                en->weak += tmpnum + 1; // +1 because weaken gets removed at start of enemy turn
-                buffer_queue(colors.magenta + "You weaken enemy for " + std::to_string(tmpnum + 1) + " more turn(s)" + colors.end); tmpnum = 0;
+                en->weak += tmpnum + 1;
+                buffer_queue(colors.magenta + "You weaken enemy for " + std::to_string(tmpnum) + " more turn(s)" + colors.end); tmpnum = 0;
                 break;
             case 'l':
                 en->strength -= tmpnum;
@@ -545,7 +546,7 @@ void init_game(vector<enemy>* env, vector<card>* crds) {
     env->push_back(enemy("Goblin", 40, 0, { "6Da","5Ba","6Da" }));
     env->push_back(enemy("Violent Duck", 42, 0, { "9Da","3Ba","8Da" }));
     env->push_back(enemy("Goblin", 46, 1, { "8Da","9Ba","9Da" }));
-    env->push_back(enemy("A Very Violent Duck", 50, 2, { "995Da","6Ba" }));
+    env->push_back(enemy("A Very Violent Duck", 50, 2, { "991Da","6Ba" }));
     env->push_back(enemy("Thief", 55, 1, { "8Da9G","6Ba" }));
     env->push_back(enemy("Cultist", 42, 1, { "8Da","7Ba","2Sa","9Da","8Da" }));
     env->push_back(enemy("Cultist", 48, 2, { "12Da","91Ba","2Sa","91Da","91Da" }));
@@ -606,7 +607,7 @@ card select_random_card() {
             else break;
         }
         if (cr.rarity == 2) {
-            if (one_chance_in(3))
+            if (one_chance_in(2))
                 cr = *select_randomly(cards.begin(), cards.end());
             else break;
         }
@@ -813,7 +814,7 @@ void create_shop(player* pl, pile* plc) {
             while (cdesc.length() < 65) {
                 cdesc += " ";
             }
-            cout << "(" << i+1 << ") " << cname << "\t|| " << cdesc << "\t|| Mana cost: " << shopcards.at(i).cost
+            cout << "(" << i+1 << ") " << shopcards.at(i).color << cname << colors.end << "\t|| " << cdesc << colors.magenta << "\t|| Mana cost: " << shopcards.at(i).cost << colors.end
                  << "\t|| Cost: " << prices.at(i) << " gold"<< "\n";
         }
         char ch = key_press();
@@ -858,16 +859,71 @@ int main() {
     // Initialize enemy
     enemy en_main = pick_enemy(&pl);
 
+    en_main = pick_enemy(&pl);
+    create_fight(&pl, &pl_pile, &en_main);
+    pl.level++;
     while (pl.act != 2) {
+        int choices[3];
         while (pl.level != 10) {
-            random_encounter(&pl, &pl_pile); // Run a random encounter
-            create_fight(&pl, &pl_pile, &en_main);
-            create_shop(&pl, &pl_pile);
-            en_main = pick_enemy(&pl);
+            for (int i = 0; i < 3; i++) {
+                int r = get_random_in_range(0,11);
+                if (r <= 2)
+                    choices[i] = 0; // shop
+                else if (r > 2 && r <= 7)
+                    choices[i] = 1; // enemy
+                else if (r > 7 && r <= 8)
+                    choices[i] = 3;
+                else
+                    choices[i] = 2; // encounter
+            }
+            cls();
+            cout << "Choose a path:\n";
+            for (int i = 0; i < 3; i++) {
+                if (choices[i] == 0)
+                    cout << "(" << i+1 << ") " << colors.yellow << "Shop\n" << colors.end;
+                if (choices[i] == 1)
+                    cout << "(" << i+1 << ") " << colors.red << "Enemy\n" << colors.end;
+                if (choices[i] == 2)
+                    cout << "(" << i+1 << ") " << colors.magenta << "Random Encounter\n" << colors.end;
+                if (choices[i] == 3)
+                    cout << "(" << i+1 << ") " << colors.green << "Rest site\n" << colors.end;
+            }
+            int path;
+            while (true) {
+                int choice = key_press();
+                cout << choice;
+                cin.ignore();
+                if (choice >= 49 && choice <= 51)
+                    path = choices[choice-49];
+                else
+                    break;
+                if (path == 0) {
+                    create_shop(&pl, &pl_pile);
+                    break;
+                }
+                else if (path == 1) {
+                    en_main = pick_enemy(&pl);
+                    create_fight(&pl, &pl_pile, &en_main);
+                    break;
+                }
+                else if (path == 2) {
+                    random_encounter(&pl, &pl_pile);
+                    break;
+                }
+                else if (path == 3) {
+                    pl.hp *= 1.2;
+                    if (pl.hp > pl.maxhp)
+                        pl.hp = pl.maxhp;
+                    break;
+                }
+
+            }
             pl.level++;
             if (pl.level == 2 || pl.level == 6)
                 pl.nlevel++;
         }
+        en_main = pick_elite_enemy(&pl);
+        create_fight(&pl, &pl_pile, &en_main);
         pl.act++;
     }
 }
