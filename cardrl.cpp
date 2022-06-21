@@ -893,7 +893,7 @@ int main() {
                 int choice = key_press();
                 cout << choice;
                 cin.ignore();
-                if (choice >= 49 && choice <= 51)
+                if (choice >= 49 && choice <= 52)
                     path = choices[choice-49];
                 else
                     break;
@@ -911,7 +911,7 @@ int main() {
                     break;
                 }
                 else if (path == 3) {
-                    pl.hp *= 1.2;
+                    pl.hp = (pl.hp * 1.2);
                     if (pl.hp > pl.maxhp)
                         pl.hp = pl.maxhp;
                     break;
