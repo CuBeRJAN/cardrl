@@ -534,6 +534,9 @@ void create_fight(player* pl, pile* plc, enemy* en_main) {
         choice = '0';
     }
     pl->gold += 50+(en_main->level*20)+(pl->act*40);
+    pl->poison = 0;
+    pl->strength = 0;
+    pl->weak = 0;
     while (getchar() != '\n');
 }
 
@@ -893,7 +896,7 @@ int main() {
                 int choice = key_press();
                 cout << choice;
                 cin.ignore();
-                if (choice >= 49 && choice <= 52)
+                if (choice >= 49 && choice <= 51)
                     path = choices[choice-49];
                 else
                     break;
@@ -911,7 +914,7 @@ int main() {
                     break;
                 }
                 else if (path == 3) {
-                    pl.hp = (pl.hp * 1.2);
+                    pl.hp = (pl.hp * 1.25);
                     if (pl.hp > pl.maxhp)
                         pl.hp = pl.maxhp;
                     break;
