@@ -9,9 +9,9 @@ void cls() {
     system("cls");
 }
 void game_quit() {
-    cout << "Game over!\n";
+    std::cout << "Game over!\n";
     char x;
-    cin >> x;
+    std::cin >> x;
     exit(0);
 }
 int key_press() { // not working: F11 (-122, toggles fullscreen)
