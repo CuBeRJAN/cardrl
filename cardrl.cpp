@@ -451,6 +451,7 @@ void print_game(player* pl, pile* pl_cards, enemy* en) {
             << mydesc << colors.magenta
             << ":: Mana cost: " << pl_cards->hand.at(i).cost << colors.end << std::endl;
     }
+    cout << colors.green << "\n(q) End Turn\n" << colors.end;
     cout << "\n\n\n";
     cout << "weak: " << colors.magenta << pl->weak << colors.end << "\t\tstr: " << colors.red << pl->strength << colors.end
         << "\t\tpoison: " << colors.green << pl->poison << colors.end << "\n";
